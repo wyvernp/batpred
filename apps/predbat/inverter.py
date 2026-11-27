@@ -2094,6 +2094,13 @@ class Inverter(BatteryCurve):
         """
 
         new_rate = int(new_rate + 0.5)
+        if self.inverter_type == "VICTRON_GX_MQTT":
+            components = getattr(self.base, "components", None)
+            component = components.get_component("victron_gx_mqtt") if components else None
+            if not component:
+                self.base.log("Warn: Inverter {} Victron GX MQTT component is not available; charge-rate write refused".format(self.id))
+                return False
+            return component.set_charge_power_sync(new_rate)
         current_rate = self.get_current_charge_rate()
 
         fuzzy, fuzzy_below = self.rate_tolerances(self.battery_rate_max_charge)
@@ -2230,6 +2237,13 @@ class Inverter(BatteryCurve):
         *If the inverter uses current rather than power we create a dummy entity for the power anyway but also write to the current entity
         """
         new_rate = int(new_rate + 0.5)
+        if self.inverter_type == "VICTRON_GX_MQTT":
+            components = getattr(self.base, "components", None)
+            component = components.get_component("victron_gx_mqtt") if components else None
+            if not component:
+                self.base.log("Warn: Inverter {} Victron GX MQTT component is not available; discharge-rate write refused".format(self.id))
+                return False
+            return component.set_discharge_power_sync(new_rate)
         current_rate = self.get_current_discharge_rate()
 
         fuzzy, fuzzy_below = self.rate_tolerances(self.battery_rate_max_discharge)
@@ -2283,6 +2297,15 @@ class Inverter(BatteryCurve):
         if isExporting and self.inv_has_target_soc and not self.inv_target_soc_used_for_discharge:
             self.log("Inverter {} Exporting, not adjusting SoC target".format(self.id))
             return
+
+        if self.inverter_type == "VICTRON_GX_MQTT":
+            components = getattr(self.base, "components", None)
+            component = components.get_component("victron_gx_mqtt") if components else None
+            if not component:
+                self.base.log("Warn: Inverter {} Victron GX MQTT component is not available; Mode 2 setpoint refused".format(self.id))
+                return False
+            self.current_charge_limit = soc
+            return component.set_operation_sync(soc, isCharging, isExporting)
 
         # Check current setting and adjust
         current_soc = int(float(self.base.get_arg("charge_limit", index=self.id, default=100.0, required_unit="%")))

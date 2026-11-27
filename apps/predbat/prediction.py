@@ -179,6 +179,7 @@ class Prediction(PredictionBatch):
             self.inverter_limit = base.inverter_limit
             self.export_limit = base.export_limit
             self.pv_ac_limit = base.pv_ac_limit
+            self.grid_import_limit = getattr(base, "grid_import_limit", 0.0)
             self.battery_rate_min = base.battery_rate_min
             self.battery_rate_max_charge = base.battery_rate_max_charge
             self.battery_rate_max_charge_dc = base.battery_rate_max_charge_dc
@@ -741,6 +742,7 @@ class Prediction(PredictionBatch):
         inverter_limit = self.inverter_limit * step
         export_limit = self.export_limit * step
         pv_ac_limit = self.pv_ac_limit * step
+        grid_import_limit = self.grid_import_limit * step
         set_charge_low_power = self.set_charge_window and self.set_charge_low_power and (save in ["best", "best10", "best90", "test"])
         carbon_enable = self.carbon_enable
         reserve = self.reserve
@@ -1404,6 +1406,16 @@ class Prediction(PredictionBatch):
                 pv_ac_before = pv_ac
                 pv_ac = max(pv_ac - over_limit, 0)
                 clipped_today += pv_ac_before - pv_ac
+
+            # Forecast-only site import cap: throttle grid-powered battery charging when total predicted
+            # site import exceeds grid_import_limit. Never reduces household/car load or DC PV charging,
+            # and does not enforce hardware fuse protection.
+            if grid_import_limit > 0 and battery_draw < 0:
+                grid_import_step = diff + car_gone_kwh + car_load_energy_bypass
+                if grid_import_step > grid_import_limit and (battery_draw + pv_dc) < 0:
+                    over_import = grid_import_step - grid_import_limit
+                    battery_draw = min(battery_draw + over_import * inverter_loss, -pv_dc)
+                    diff = get_diff(battery_draw, pv_dc, pv_ac, load_yesterday, inverter_loss, inverter_loss_recp)
 
             # Adjust battery soc
             if battery_draw > 0:

@@ -1,0 +1,122 @@
+# ------------------------------------------------------------------
+# Victron MultiPlus / Quattro with native local GX MQTT control.
+#
+# This is a separate alternative to templates/victron.yaml. The existing
+# Home Assistant Victron GX template and its helper/automation route remain
+# supported. Read the Victron direct MQTT section in docs/inverter-setup.md
+# before enabling controls.
+# ------------------------------------------------------------------
+---
+pred_bat:
+  module: predbat
+  class: PredBat
+
+  prefix: predbat
+  timezone: Europe/London
+  template: True
+  threads: auto
+  load_filter_threshold: 30
+
+  num_inverters: 1
+  inverter_type: VICTRON_GX_MQTT
+  inverter:
+    name: "Victron MultiPlus / Quattro (local MQTT)"
+    support_charge_freeze: true
+    support_discharge_freeze: true
+
+  # Set literal watt limits to your equipment. These are not discovered or
+  # inferred by the MQTT component.
+  battery_rate_max: 3500
+  inverter_limit: 4000
+  inverter_reserve_max: 100
+  soc_max:
+    - 16.0
+  reserve:
+    - 10
+  battery_min_soc:
+    - 10
+
+  # This is an HA-connected template: MQTT supplies inverter controls and
+  # safety interlocks, not standalone prediction data. Keep these accurate HA
+  # sensors and recorder history configured; the component does not generate
+  # grid/load/PV energy counters or historical power data.
+  battery_power:
+    - sensor.gx_device_dc_battery_power
+  battery_power_invert:
+    - true
+  grid_power:
+    - sensor.grid_power
+  grid_power_invert:
+    - false
+  pv_power:
+    - sensor.pv_power
+  load_power:
+    - sensor.house_load_power
+  soc_percent:
+    - sensor.gx_device_dc_battery_charge
+
+  # These are read-only sensors created by the component after GX N
+  # notifications. The inverter writer uses direct MQTT, not HA services.
+  charge_rate:
+    - sensor.predbat_victron_charge_rate
+  discharge_rate:
+    - sensor.predbat_victron_discharge_rate
+
+  # Local dbus-flashmq connection and explicitly verified system identifiers.
+  # Replace all example values. Do not infer the Quattro active input from
+  # input order: grid_input is 0 for AC input 1 and 1 for AC input 2.
+  victron_gx:
+    host: gx.local
+    port: 8883
+    tls: true
+    # Optional: path to the CA certificate used by the local GX MQTT broker.
+    #ca_file: /config/certs/venus-ca.crt
+    #username: predbat
+    #password: change-me
+    portal_id: REPLACE_WITH_VRM_PORTAL_ID
+    hub4_instance: REPLACE_WITH_HUB4_INSTANCE
+    vebus_instance: REPLACE_WITH_VEBUS_INSTANCE
+    settings_instance: 0
+    system_instance: 0
+    # "battery" means a managed battery service exposing /Io allow flags and
+    # /Info current limits. Use "vebus" only for a VE.Bus BMS with fresh
+    # /Bms/BmsExpected and allow-to-charge/discharge signals.
+    battery_service_type: battery
+    battery_instance: REPLACE_WITH_BATTERY_INSTANCE
+    grid_input: 0
+    # Must be the numeric /Settings/DynamicEss/Mode value observed when DESS
+    # is OFF on this GX. Predbat never changes ESS or DESS mode.
+    dess_off_value: 0
+
+    # These are grid-side setpoint values in W (positive imports, negative
+    # exports), and hard caps; choose values within your supply/export limits.
+    charge_setpoint_w: 2500
+    export_setpoint_w: 2500
+    max_grid_import_w: 4000
+    max_grid_export_w: 2500
+
+    # Persistent settings are capped to these explicitly configured values.
+    # Match the configured battery and inverter, not just this example.
+    max_charge_current_a: 70
+    max_discharge_power_w: 4000
+    # Must exactly match the external watchdog's explicit fallback values.
+    watchdog_safe_max_charge_current_a: 70
+    watchdog_safe_max_discharge_power_w: 4000
+
+    # Controls remain disabled until an independently operated watchdog is
+    # deployed with the same random secret and matching safe values.
+    enable_controls: false
+    watchdog_required: true
+    watchdog_token: REPLACE_WITH_A_RANDOM_SECRET_OF_AT_LEAST_32_CHARACTERS
+
+  pv_forecast_today: re:(sensor.(solcast_|)(pv_forecast_|)forecast_today)
+  pv_forecast_tomorrow: re:(sensor.(solcast_|)(pv_forecast_|)forecast_tomorrow)
+  pv_forecast_d3: re:(sensor.(solcast_|)(pv_forecast_|)forecast_(day_3|d3))
+  pv_forecast_d4: re:(sensor.(solcast_|)(pv_forecast_|)forecast_(day_4|d4))
+
+  metric_octopus_import: 're:(sensor.(octopus_energy_|)electricity_[0-9a-z]+_[0-9a-z]+_current_rate)'
+  metric_octopus_export: 're:(sensor.(octopus_energy_|)electricity_[0-9a-z]+_[0-9a-z]+_export_current_rate)'
+
+  days_previous:
+    - 7
+  num_cars: 0

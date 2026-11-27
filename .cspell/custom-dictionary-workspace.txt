@@ -81,6 +81,7 @@ britkat1980
 bwignore
 byok
 cadata
+cafile
 calcsize
 calib
 callees
@@ -154,6 +155,7 @@ dateutil
 dayname
 daynumber
 daysymbol
+dbus
 deadband
 deadbanding
 deadbeefdeadbeef
@@ -190,6 +192,7 @@ dstamp
 dstart
 dtu
 dtype
+DVCC
 dwindow
 Dykstra
 Dykstra's
@@ -261,6 +264,7 @@ figsize
 finaliser
 Fingerbot
 firstparty
+flashmq
 flextras
 fline
 FLOMASTA
@@ -736,6 +740,7 @@ synkctl
 syscmd
 sysdn
 syssn
+systemcalc
 tabindex
 tasmota
 TCWORLD
@@ -821,8 +826,10 @@ userinterface
 utcoffset
 Vallery
 varh
+vebus
 venv
 Victron
+victronenergy
 Viridis
 visibilitychange
 vvwwxxabcdefyyzzuu

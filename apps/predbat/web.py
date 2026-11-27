@@ -2008,8 +2008,22 @@ var options = {
     type: 'line',
     width: width,
     height: height,
+    background: 'transparent',
+    fontFamily: 'inherit',
     animations: {
-        enabled: false
+        enabled: true,
+        easing: 'easeinout',
+        speed: 320
+    }
+  },
+  grid: {
+    borderColor: document.body.classList.contains('dark-mode') ? '#334155' : '#e2e8f0',
+    strokeDashArray: 4
+  },
+  plotOptions: {
+    bar: {
+      borderRadius: 4,
+      columnWidth: '65%'
     }
   },
   span: {
@@ -2040,7 +2054,24 @@ var options = {
   chart: {
     type: 'line',
     width: width,
-    height: height
+    height: height,
+    background: 'transparent',
+    fontFamily: 'inherit',
+    animations: {
+        enabled: true,
+        easing: 'easeinout',
+        speed: 320
+    }
+  },
+  grid: {
+    borderColor: document.body.classList.contains('dark-mode') ? '#334155' : '#e2e8f0',
+    strokeDashArray: 4
+  },
+  plotOptions: {
+    bar: {
+      borderRadius: 4,
+      columnWidth: '65%'
+    }
   },
   span: {
     start: 'day'
@@ -2170,18 +2201,22 @@ var options = {
         text += "   xaxis: [\n"
         text += "    {\n"
         text += "       x: new Date('{}').getTime(),\n".format(now_str)
-        text += "       borderColor: '#775DD0',\n"
+        text += "       borderColor: '#6366f1',\n"
+        text += "       strokeDashArray: 4,\n"
         text += "       textAnchor: 'middle',\n"
         text += "       label: {\n"
-        text += "          text: 'now'\n"
+        text += "          text: 'now',\n"
+        text += "          style: { background: '#6366f1', color: '#fff', fontSize: '11px', padding: { left: 6, right: 6, top: 2, bottom: 2 } }\n"
         text += "       }\n"
         text += "    },\n"
         text += "    {\n"
         text += "       x: new Date('{}').getTime(),\n".format(midnight_str)
-        text += "       borderColor: '#000000',\n"
+        text += "       borderColor: '#94a3b8',\n"
+        text += "       strokeDashArray: 4,\n"
         text += "       textAnchor: 'middle',\n"
         text += "       label: {\n"
-        text += "          text: 'midnight'\n"
+        text += "          text: 'midnight',\n"
+        text += "          style: { background: '#475569', color: '#fff', fontSize: '11px', padding: { left: 6, right: 6, top: 2, bottom: 2 } }\n"
         text += "       }\n"
         text += "    }\n"
         text += "   ]\n"
@@ -2845,20 +2880,45 @@ chart.render();
         text += get_plan_css()
 
         # Add warning/error divs
-        text += '<div id="staleWarning" style="display:none; padding:10px; background:#fff3cd; color:#856404; border:1px solid #ffc107; margin-bottom:10px;">&#9888;&#65039; Plan data is stale</div>'
-        text += '<div id="planError" style="display:none; padding:10px; background:#fee; color:#c00; border:1px solid #c00; margin-bottom:10px;"></div>'
+        text += '<div id="staleWarning" class="plan-alert plan-alert-warn">&#9888;&#65039; Plan data is stale</div>'
+        text += '<div id="planError" class="plan-alert plan-alert-error"></div>'
 
-        # Add view switcher buttons
-        text += '<div style="margin-bottom: 15px; display: flex; gap: 8px; align-items: center;">'
-        text += '<button class="view-button" data-view="plan" onclick="switchView(\'plan\')" style="padding: 6px 12px; border-radius: 3px; font-size: 14px; border: 1px solid #ddd; background-color: #4CAF50; color: white; cursor: pointer;">Plan</button>'
-        text += '<button class="view-button" data-view="yesterday" onclick="switchView(\'yesterday\')" style="padding: 6px 12px; border-radius: 3px; font-size: 14px; border: 1px solid #ddd; background-color: #f0f0f0; color: black; cursor: pointer;">History</button>'
-        text += '<button class="view-button" data-view="baseline" onclick="switchView(\'baseline\')" style="padding: 6px 12px; border-radius: 3px; font-size: 14px; border: 1px solid #ddd; background-color: #f0f0f0; color: black; cursor: pointer;">Yesterday Without Predbat</button>'
-        text += '<span id="planTimestamp" style="margin-left: 16px; font-size: 13px; color: #666;"></span>'
-        text += '<label id="debugToggleLabel" style="margin-left: auto;"><input type="checkbox" id="debugToggle" onchange="onDebugToggleChange()"> Show Debug</label>'
+        # Add modern view switcher toolbar
+        text += '<div class="plan-toolbar">'
+        text += '<div class="plan-view-pills">'
+        text += '<button class="view-button active" data-view="plan" onclick="switchView(\'plan\')">Plan</button>'
+        text += '<button class="view-button" data-view="yesterday" onclick="switchView(\'yesterday\')">History</button>'
+        text += '<button class="view-button" data-view="baseline" onclick="switchView(\'baseline\')">Yesterday Without Predbat</button>'
+        text += "</div>"
+        text += '<button id="planChartToggleBtn" class="plan-chart-toggle" onclick="togglePlanChart()"><span class="mdi mdi-chart-areaspline"></span> Graphs</button>'
+        text += '<span id="planTimestamp" class="plan-timestamp-badge"></span>'
+        text += '<label id="debugToggleLabel" class="plan-debug-label"><input type="checkbox" id="debugToggle" onchange="onDebugToggleChange()"> Show Debug</label>'
+        text += "</div>"
+
+        # Collapsible interactive plan & baseline comparison chart panel
+        text += '<div id="planChartSection" class="plan-chart-section collapsed">'
+        text += '<div class="plan-chart-card">'
+        text += '<div class="plan-chart-header">'
+        text += '<div class="plan-chart-controls">'
+        text += '<div class="chart-pill-group">'
+        text += '<button class="chart-mode-btn active" data-mode="soc_rates" onclick="setPlanChartMode(\'soc_rates\')">SoC &amp; Rates</button>'
+        text += '<button class="chart-mode-btn" data-mode="comparison" onclick="setPlanChartMode(\'comparison\')">With vs. Without Predbat</button>'
+        text += '<button class="chart-mode-btn" data-mode="energy" onclick="setPlanChartMode(\'energy\')">Energy Flow</button>'
+        text += "</div>"
+        text += '<div id="baselineMetricGroup" class="chart-pill-group" style="display:none;">'
+        text += '<button class="chart-metric-btn active" data-metric="cumulative_cost" onclick="setBaselineMetric(\'cumulative_cost\')">Cumulative Cost</button>'
+        text += '<button class="chart-metric-btn" data-metric="soc" onclick="setBaselineMetric(\'soc\')">Battery SoC %</button>'
+        text += '<button class="chart-metric-btn" data-metric="slot_cost" onclick="setBaselineMetric(\'slot_cost\')">Slot Cost</button>'
+        text += "</div>"
+        text += "</div>"
+        text += "</div>"
+        text += '<div id="planChartKpiStrip" class="plan-kpi-strip" style="display:none;"></div>'
+        text += '<div id="planInteractiveChart"></div>'
+        text += "</div>"
         text += "</div>"
 
         # Day picker for the History view, filled in by renderHistoryPicker()
-        text += '<div id="historyPicker" style="display:none; margin-bottom: 10px; gap: 6px; flex-wrap: wrap;"></div>'
+        text += '<div id="historyPicker" style="display:none;"></div>'
 
         # Add plan container
         text += '<div id="planContainer"></div>'
@@ -3550,27 +3610,74 @@ chart.render();
 
         if not soc_kw_best:
             text += "<br><h2>Loading...</h2>"
+        elif chart == "Comparison":
+            # Side-by-side / overlaid comparison of Predbat (Best) vs Baseline (Without Predbat)
+            def _last_val(series_dict):
+                """Return the last numeric value from a timestamp->value dict, or None."""
+                if not series_dict:
+                    return None
+                try:
+                    return float(list(series_dict.values())[-1])
+                except (TypeError, ValueError):
+                    return None
+
+            best_end = _last_val(best_metric)
+            base_end = _last_val(metric)
+            major = self.currency_symbols[0]
+            minor = self.currency_symbols[1]
+            text += '<div class="comparison-summary-grid">'
+            if best_end is not None and base_end is not None:
+                saving_minor = base_end - best_end
+                saving_major = saving_minor / 100.0
+                pct_str = "{:.1f}% vs baseline".format((saving_minor / base_end) * 100.0) if base_end > 0 else "Forecast horizon"
+                text += '<div class="comparison-kpi-card"><div class="comparison-kpi-label">With Predbat (Forecast)</div><div class="comparison-kpi-value">{}{:.2f}</div><div class="comparison-kpi-sub">Optimised schedule</div></div>'.format(
+                    major, best_end / 100.0
+                )
+                text += '<div class="comparison-kpi-card"><div class="comparison-kpi-label">Without Predbat (Baseline)</div><div class="comparison-kpi-value">{}{:.2f}</div><div class="comparison-kpi-sub">Unoptimised baseline</div></div>'.format(
+                    major, base_end / 100.0
+                )
+                text += '<div class="comparison-kpi-card kpi-saving"><div class="comparison-kpi-label">Forecast Saving</div><div class="comparison-kpi-value">{}{}{:.2f}</div><div class="comparison-kpi-sub">{}</div></div>'.format(
+                    "+" if saving_major >= 0 else "-", major, abs(saving_major), pct_str
+                )
+            text += "</div>"
+
+            cost_series = [
+                {"name": "With Predbat (Best)", "data": best_metric, "opacity": "0.22", "stroke_width": "3", "stroke_curve": "smooth", "chart_type": "area", "color": "#10b981"},
+                {"name": "Without Predbat (Baseline)", "data": metric, "opacity": "1.0", "stroke_width": "2.5", "stroke_curve": "smooth", "color": "#f97316"},
+                {"name": "Actual Today", "data": cost_today, "opacity": "0.18", "stroke_width": "2", "stroke_curve": "smooth", "chart_type": "area", "color": "#6366f1"},
+                {"name": "With Predbat (10% PV)", "data": best10_metric, "opacity": "1.0", "stroke_width": "1.5", "stroke_curve": "smooth", "color": "#14b8a6", "hidden": True},
+                {"name": "Without Predbat (10% PV)", "data": base10_metric, "opacity": "1.0", "stroke_width": "1.5", "stroke_curve": "smooth", "color": "#fb7185", "hidden": True},
+            ]
+            soc_series = [
+                {"name": "SoC With Predbat (Best)", "data": soc_kw_best, "opacity": "0.22", "stroke_width": "3", "stroke_curve": "smooth", "chart_type": "area", "color": "#10b981"},
+                {"name": "SoC Without Predbat (Baseline)", "data": soc_kw, "opacity": "1.0", "stroke_width": "2.5", "stroke_curve": "smooth", "color": "#f97316"},
+                {"name": "Actual SoC", "data": soc_kw_h0, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "smooth", "color": "#0ea5e9"},
+            ]
+            text += '<div class="chart-card" style="margin-bottom: 18px;"><div id="chart_comp_cost"></div></div>'
+            text += self.render_chart(cost_series, minor, "Cost: With Predbat vs. Without Predbat (Baseline)", now_str, tagname="chart_comp_cost")
+            text += '<div class="chart-card"><div id="chart_comp_soc"></div></div>'
+            text += self.render_chart(soc_series, "kWh", "Battery SoC: With Predbat vs. Without Predbat (Baseline)", now_str, tagname="chart_comp_soc")
         elif chart == "Battery":
             series_data = [
-                {"name": "Base", "data": soc_kw, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "smooth", "color": "#3291a8"},
-                {"name": "Base10", "data": soc_kw_base10, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "smooth", "color": "#e8972c"},
-                {"name": "Best", "data": soc_kw_best, "opacity": "1.0", "stroke_width": "4", "stroke_curve": "smooth", "color": "#eb2323"},
-                {"name": "Best10", "data": soc_kw_best10, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "smooth", "color": "#cd23eb"},
-                {"name": "Actual", "data": soc_kw_h0, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "smooth", "color": "#3291a8"},
-                {"name": "Predicted (+1h)", "data": soc_kw_best_h1, "opacity": "0.7", "stroke_width": "2", "stroke_curve": "smooth", "color": "#f5a442"},
-                {"name": "Predicted (+8h)", "data": soc_kw_best_h8, "opacity": "0.7", "stroke_width": "2", "stroke_curve": "smooth", "color": "#9b59b6"},
-                {"name": "Charge Limit Base", "data": charge_limit_kw, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "stepline", "color": "#15eb8b"},
+                {"name": "Base", "data": soc_kw, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "smooth", "color": "#0ea5e9"},
+                {"name": "Base10", "data": soc_kw_base10, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "smooth", "color": "#f59e0b"},
+                {"name": "Best", "data": soc_kw_best, "opacity": "1.0", "stroke_width": "3.5", "stroke_curve": "smooth", "color": "#10b981"},
+                {"name": "Best10", "data": soc_kw_best10, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "smooth", "color": "#a855f7"},
+                {"name": "Actual", "data": soc_kw_h0, "opacity": "1.0", "stroke_width": "2.5", "stroke_curve": "smooth", "color": "#6366f1"},
+                {"name": "Predicted (+1h)", "data": soc_kw_best_h1, "opacity": "0.75", "stroke_width": "2", "stroke_curve": "smooth", "color": "#fb923c"},
+                {"name": "Predicted (+8h)", "data": soc_kw_best_h8, "opacity": "0.75", "stroke_width": "2", "stroke_curve": "smooth", "color": "#c084fc"},
+                {"name": "Charge Limit Base", "data": charge_limit_kw, "opacity": "1.0", "stroke_width": "2", "stroke_curve": "stepline", "color": "#14b8a6"},
                 {
                     "name": "Charge Limit Best",
                     "data": best_charge_limit_kw,
-                    "opacity": "0.2",
-                    "stroke_width": "4",
+                    "opacity": "0.18",
+                    "stroke_width": "3",
                     "stroke_curve": "stepline",
                     "chart_type": "area",
-                    "color": "#e3e019",
+                    "color": "#eab308",
                 },
-                {"name": "Best Export Limit", "data": best_export_limit_kw, "opacity": "1.0", "stroke_width": "3", "stroke_curve": "stepline", "color": "#15eb1c"},
-                {"name": "Record", "data": record, "opacity": "0.5", "stroke_width": "4", "stroke_curve": "stepline", "color": "#000000", "chart_type": "area"},
+                {"name": "Best Export Limit", "data": best_export_limit_kw, "opacity": "1.0", "stroke_width": "2.5", "stroke_curve": "stepline", "color": "#22c55e"},
+                {"name": "Record", "data": record, "opacity": "0.35", "stroke_width": "3", "stroke_curve": "stepline", "color": "#64748b", "chart_type": "area"},
             ]
             # Multi-inverter installs: each battery's actual SoC in % of its own capacity, on a 0-100% axis
             # of their own, off until picked in the legend
@@ -3988,6 +4095,7 @@ chart.render();
 
         text += '<div class="charts-menu">'
         text += "<h3>Charts</h3> "
+        text += f'<a href="./charts?chart=Comparison" class="{"active" if chart == "Comparison" else ""}">With vs. Without Predbat</a>'
         text += f'<a href="./charts?chart=Battery" class="{"active" if chart == "Battery" else ""}">Battery</a>'
         text += f'<a href="./charts?chart=Power" class="{"active" if chart == "Power" else ""}">Power</a>'
         text += f'<a href="./charts?chart=Cost" class="{"active" if chart == "Cost" else ""}">Cost</a>'
@@ -4006,8 +4114,8 @@ chart.render();
             text += f'<a href="./charts?chart=LoadMLPower" class="{"active" if chart == "LoadMLPower" else ""}">LoadMLPower</a>'
         text += "</div>"
 
-        if chart not in ("MarginalCosts", "Curves", "PVCalibration", "PVAccuracy"):
-            text += '<div id="chart"></div>'
+        if chart not in ("Comparison", "MarginalCosts", "Curves", "PVCalibration", "PVAccuracy"):
+            text += '<div class="chart-card"><div id="chart"></div></div>'
         text += self.get_chart(chart=chart)
         text += "</body></html>\n"
         return web.Response(content_type="text/html", text=text)

@@ -2035,22 +2035,29 @@ def get_filter_css():
     text = """
         <style>
         .filter-container {
-            margin: 20px 0;
+            margin: 16px 0;
             display: flex;
             align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
         }
         .filter-input {
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-            width: 300px;
-            margin-left: 10px;
+            padding: 9px 14px;
+            border: 1px solid var(--ui-border-strong);
+            border-radius: var(--ui-radius-pill);
+            background-color: var(--ui-surface);
+            color: var(--ui-text);
+            font-size: 14px;
+            font-family: inherit;
+            width: 320px;
+            max-width: 100%;
+            box-shadow: var(--ui-shadow-sm);
+            transition: border-color var(--ui-transition), box-shadow var(--ui-transition);
         }
-        body.dark-mode .filter-input {
-            background-color: #333;
-            color: #e0e0e0;
-            border-color: #555;
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--ui-accent);
+            box-shadow: 0 0 0 3px var(--ui-accent-soft);
         }
         </style>
     """
@@ -2771,92 +2778,88 @@ def get_dashboard_css():
     text = """
 <style>
 .expand-all-button {
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--ui-accent);
+    color: #ffffff;
     border: none;
-    padding: 10px 20px;
+    padding: 8px 18px;
     text-align: center;
     text-decoration: none;
-    display: inline-block;
-    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
     cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
+    border-radius: var(--ui-radius-pill);
+    box-shadow: var(--ui-shadow-sm);
+    transition: background-color var(--ui-transition), box-shadow var(--ui-transition), transform 0.12s ease;
 }
 
 .expand-all-button:hover {
-    background-color: #45a049;
+    background-color: var(--ui-accent-hover);
+    box-shadow: var(--ui-shadow-md);
 }
 
 .dashboard-section {
-    margin: 0;
-    margin-bottom: 2px;
+    margin: 0 0 12px 0;
+    background-color: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-lg);
+    box-shadow: var(--ui-shadow-sm);
+    overflow: hidden;
+    transition: box-shadow var(--ui-transition), border-color var(--ui-transition);
+}
+
+.dashboard-section:hover {
+    border-color: var(--ui-border-strong);
 }
 
 .dashboard-section-header {
     cursor: pointer;
     user-select: none;
-    padding: 6px 10px;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    transition: background-color 0.3s ease;
+    padding: 12px 16px;
+    background-color: var(--ui-surface-subtle);
+    transition: background-color var(--ui-transition);
     display: flex;
     align-items: center;
     margin: 0;
+    font-weight: 600;
+    color: var(--ui-text);
 }
 
 .dashboard-section-header:hover {
-    background-color: #e8e8e8;
+    background-color: var(--ui-surface-hover);
 }
 
 .expand-icon {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 24px;
     height: 24px;
-    line-height: 24px;
-    text-align: center;
-    margin-right: 8px;
-    font-weight: bold;
-    font-size: 20px;
-    color: #4CAF50;
+    margin-right: 10px;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--ui-accent);
+    transition: transform var(--ui-transition);
 }
 
 .dashboard-section-content {
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, padding 0.25s ease;
     overflow-y: auto;
-    padding-bottom: 20px;
+    padding: 16px;
 }
 
 .dashboard-section-content.collapsed {
     max-height: 0;
     opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .dashboard-section-content:not(.collapsed) {
     max-height: 50000px;
     opacity: 1;
-}
-
-/* Dark mode for dashboard sections */
-body.dark-mode .expand-all-button {
-    background-color: #4CAF50;
-}
-
-body.dark-mode .expand-all-button:hover {
-    background-color: #45a049;
-}
-
-body.dark-mode .dashboard-section-header {
-    background-color: #333;
-    color: #e0e0e0;
-}
-
-body.dark-mode .dashboard-section-header:hover {
-    background-color: #3a3a3a;
-}
-
-body.dark-mode .expand-icon {
-    color: #4CAF50;
 }
 </style>
 """
@@ -4867,72 +4870,128 @@ def get_charts_css():
     text = """
 <style>
 .charts-menu {
-tabindex="0"  <!-- Make the menu focusable -->
-    background-color: #ffffff;
-    overflow-x: auto; /* Enable horizontal scrolling */
-    white-space: nowrap; /* Prevent menu items from wrapping */
+    background-color: var(--ui-surface);
+    overflow-x: auto;
+    white-space: nowrap;
     display: flex;
     align-items: center;
-    margin-bottom: 6px;
-    border-bottom: 1px solid #ddd;
-    padding: 4px 0;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    scrollbar-width: thin; /* Firefox */
-    scrollbar-color: #4CAF50 #f0f0f0; /* Firefox */
+    gap: 6px;
+    margin-bottom: 16px;
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-lg);
+    padding: 8px 12px;
+    box-shadow: var(--ui-shadow-sm);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ui-border-strong) transparent;
 }
 
 .charts-menu h3 {
-    margin: 0 10px;
-    flex-shrink: 0; /* Prevent shrinking */
-    white-space: nowrap; /* Prevent text wrapping */
+    margin: 0 10px 0 4px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-muted);
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .charts-menu a {
-    color: #333;
+    color: var(--ui-text-secondary);
     text-align: center;
-    padding: 4px 12px;
+    padding: 7px 14px;
     text-decoration: none;
-    font-size: 14px;
-    border-radius: 4px;
-    margin: 0 2px;
-    flex-shrink: 0; /* Prevent items from shrinking */
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: var(--ui-radius-pill);
+    flex-shrink: 0;
     white-space: nowrap;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color var(--ui-transition), color var(--ui-transition), box-shadow var(--ui-transition);
 }
 
 .charts-menu a:hover {
-    background-color: #f0f0f0;
-    color: #4CAF50;
+    background-color: var(--ui-surface-subtle);
+    color: var(--ui-accent-hover);
 }
 
 .charts-menu a.active {
-    background-color: #4CAF50;
-    color: white;
+    background-color: var(--ui-accent);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.28);
 }
 
-/* Dark mode charts menu styles */
-body.dark-mode .charts-menu {
-    background-color: #1e1e1e;
-    border-bottom: 1px solid #333;
-    scrollbar-color: #4CAF50 #333; /* Firefox */
+.chart-card {
+    background-color: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-lg);
+    padding: 20px;
+    box-shadow: var(--ui-shadow-sm);
+    animation: chartFadeIn 0.28s ease-out;
 }
 
-body.dark-mode .charts-menu h3 {
-    color: #e0e0e0;
+@keyframes chartFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-body.dark-mode .charts-menu a {
-    color: white;
+.chart-card h2 {
+    margin: 0 0 12px 0;
+    font-size: 1.15rem;
+    color: var(--ui-text);
 }
 
-body.dark-mode .charts-menu a:hover {
-    background-color: #2c652f;
-    color: white;
+.comparison-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
 }
 
-body.dark-mode .charts-menu a.active {
-    background-color: #4CAF50;
-    color: white;
+.comparison-kpi-card {
+    background-color: var(--ui-surface);
+    border: 1px solid var(--ui-border);
+    border-radius: var(--ui-radius-md);
+    padding: 14px 16px;
+    box-shadow: var(--ui-shadow-sm);
+    transition: transform var(--ui-transition), box-shadow var(--ui-transition);
+}
+
+.comparison-kpi-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--ui-shadow-md);
+}
+
+.comparison-kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ui-text-muted);
+    margin-bottom: 4px;
+}
+
+.comparison-kpi-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ui-text);
+}
+
+.comparison-kpi-sub {
+    font-size: 12px;
+    color: var(--ui-text-muted);
+    margin-top: 2px;
+}
+
+.comparison-kpi-card.kpi-saving {
+    border-color: rgba(16, 185, 129, 0.35);
+    background-color: var(--ui-accent-soft);
+}
+
+.comparison-kpi-card.kpi-saving .comparison-kpi-value {
+    color: var(--ui-accent-text);
 }
 </style>
 <script>
@@ -6326,51 +6385,384 @@ document.addEventListener('DOMContentLoaded', function() {
 def get_plan_css():
     text = """<body>
     <style>
-    /* CSS Variables for colors */
+    /* Modern Plan Table & Controls Styling */
     :root {
-        --bg-default: #FFFFFF;
-        --bg-table: #FFFFFF;
-        --text-default: #000000;
-        --text-muted: #666666;
-        --border-color: #ddd;
+        --bg-default: var(--ui-bg, #f8fafc);
+        --bg-table: var(--ui-surface, #ffffff);
+        --text-default: var(--ui-text, #0f172a);
+        --text-muted: var(--ui-text-muted, #64748b);
+        --border-color: var(--ui-border, #e2e8f0);
     }
 
     body.dark-mode {
-        --bg-default: #1e1e1e;
-        --bg-table: #2d2d2d;
-        --text-default: #FFFFFF;
-        --text-muted: #cccccc;
-        --border-color: #444;
+        --bg-default: var(--ui-bg, #0f172a);
+        --bg-table: var(--ui-surface, #1e293b);
+        --text-default: var(--ui-text, #f1f5f9);
+        --text-muted: var(--ui-text-muted, #94a3b8);
+        --border-color: var(--ui-border, #334155);
     }
 
-    /* Table styling for dark mode */
     body {
         background-color: var(--bg-default);
         color: var(--text-default);
     }
 
-    table {
+    /* Plan toolbar & segmented pill view switcher */
+    .plan-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        background-color: var(--ui-surface, #ffffff);
+        border: 1px solid var(--border-color);
+        border-radius: var(--ui-radius-lg, 14px);
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        box-shadow: var(--ui-shadow-sm);
+    }
+
+    .plan-view-pills {
+        display: inline-flex;
+        background-color: var(--ui-surface-subtle, #f1f5f9);
+        padding: 3px;
+        border-radius: var(--ui-radius-pill, 9999px);
+        border: 1px solid var(--border-color);
+        gap: 2px;
+        flex-wrap: wrap;
+    }
+
+    .view-button {
+        padding: 6px 14px;
+        border-radius: var(--ui-radius-pill, 9999px);
+        font-size: 13px;
+        font-weight: 500;
+        border: none;
+        background-color: transparent;
+        color: var(--ui-text-secondary, #334155);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .view-button:hover {
+        color: var(--ui-text, #0f172a);
+        background-color: rgba(148, 163, 184, 0.14);
+    }
+
+    .view-button.active {
+        background-color: var(--ui-accent, #10b981);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.28);
+    }
+
+    .plan-chart-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: var(--ui-radius-pill, 9999px);
+        font-size: 13px;
+        font-weight: 500;
+        border: 1px solid var(--border-color);
+        background-color: var(--ui-surface-subtle, #f1f5f9);
+        color: var(--ui-text-secondary, #334155);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .plan-chart-toggle:hover {
+        border-color: var(--ui-accent, #10b981);
+        color: var(--ui-accent-hover, #059669);
+    }
+
+    .plan-chart-toggle.active {
+        background-color: var(--ui-accent-soft, #ecfdf5);
+        border-color: rgba(16, 185, 129, 0.4);
+        color: var(--ui-accent-text, #065f46);
+    }
+
+    .plan-timestamp-badge {
+        font-size: 12px;
+        color: var(--text-muted);
+        background-color: var(--ui-surface-subtle, #f1f5f9);
+        padding: 4px 10px;
+        border-radius: var(--ui-radius-pill, 9999px);
+        border: 1px solid var(--border-color);
+    }
+
+    .plan-debug-label {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-muted);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .plan-debug-label input[type="checkbox"] {
+        accent-color: var(--ui-accent, #10b981);
+        width: 15px;
+        height: 15px;
+        cursor: pointer;
+    }
+
+    /* History day picker pills */
+    #historyPicker {
+        margin-bottom: 12px;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .history-day-button {
+        padding: 5px 12px;
+        border-radius: var(--ui-radius-pill, 9999px);
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid var(--border-color);
+        background-color: var(--ui-surface, #ffffff);
+        color: var(--ui-text-secondary, #334155);
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .history-day-button:hover {
+        border-color: var(--ui-accent, #10b981);
+        color: var(--ui-accent-hover, #059669);
+    }
+
+    .history-day-button.active {
+        background-color: var(--ui-accent, #10b981);
+        border-color: var(--ui-accent, #10b981);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+    }
+
+    /* Interactive Plan & Baseline Chart Panel */
+    .plan-chart-section {
+        overflow: hidden;
+        transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease, margin-bottom 0.28s ease;
+        max-height: 1200px;
+        opacity: 1;
+        margin-bottom: 16px;
+    }
+
+    .plan-chart-section.collapsed {
+        max-height: 0;
+        opacity: 0;
+        margin-bottom: 0;
+        pointer-events: none;
+    }
+
+    .plan-chart-card {
+        background-color: var(--ui-surface, #ffffff);
+        border: 1px solid var(--border-color);
+        border-radius: var(--ui-radius-lg, 14px);
+        padding: 16px 20px;
+        box-shadow: var(--ui-shadow-sm);
+    }
+
+    .plan-chart-header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .plan-chart-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .chart-pill-group {
+        display: inline-flex;
+        background-color: var(--ui-surface-subtle, #f1f5f9);
+        padding: 3px;
+        border-radius: var(--ui-radius-pill, 9999px);
+        border: 1px solid var(--border-color);
+        gap: 2px;
+    }
+
+    .chart-mode-btn, .chart-metric-btn {
+        padding: 5px 12px;
+        border-radius: var(--ui-radius-pill, 9999px);
+        border: none;
+        background: transparent;
+        color: var(--ui-text-secondary, #334155);
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .chart-mode-btn:hover, .chart-metric-btn:hover {
+        color: var(--ui-text, #0f172a);
+        background-color: rgba(148, 163, 184, 0.14);
+    }
+
+    .chart-mode-btn.active {
+        background-color: var(--ui-accent, #10b981);
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+    }
+
+    .chart-metric-btn.active {
+        background-color: var(--ui-surface, #ffffff);
+        color: var(--ui-text, #0f172a);
+        box-shadow: var(--ui-shadow-sm);
+    }
+
+    .plan-kpi-strip {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .plan-kpi-card {
+        background-color: var(--ui-surface-subtle, #f1f5f9);
+        border: 1px solid var(--border-color);
+        border-radius: var(--ui-radius-md, 10px);
+        padding: 10px 14px;
+        transition: transform 0.2s ease;
+    }
+
+    .plan-kpi-card.kpi-highlight {
+        background-color: var(--ui-accent-soft, #ecfdf5);
+        border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    .plan-kpi-label {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text-muted);
+    }
+
+    .plan-kpi-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--text-default);
+        margin-top: 2px;
+    }
+
+    .plan-kpi-card.kpi-highlight .plan-kpi-value {
+        color: var(--ui-accent-text, #065f46);
+    }
+
+    .plan-kpi-sub {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    /* Plan table wrapper & smooth view transitions */
+    #planContainer {
+        animation: planFadeIn 0.24s ease-out;
+        overflow-x: auto;
+        border-radius: var(--ui-radius-lg, 14px);
+    }
+
+    @keyframes planFadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    #planContainer table {
+        width: 100%;
         background-color: var(--bg-table);
         color: var(--text-default);
-        border-collapse: collapse;
-    }
-
-    table td, table th {
+        border-collapse: separate;
+        border-spacing: 0;
         border: 1px solid var(--border-color);
+        border-radius: var(--ui-radius-lg, 14px);
+        box-shadow: var(--ui-shadow-sm);
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    #planContainer table th {
+        position: sticky;
+        top: 56px;
+        z-index: 10;
+        background-color: var(--ui-surface-subtle, #f1f5f9);
+        color: var(--ui-text-secondary, #334155);
+        font-weight: 600;
+        font-size: 11.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 10px 10px;
+        border-bottom: 1px solid var(--border-color);
+        border-right: 1px solid rgba(148, 163, 184, 0.16);
+        white-space: nowrap;
+    }
+
+    #planContainer table th:last-child {
+        border-right: none;
+    }
+
+    #planContainer table td {
+        padding: 7px 10px !important;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+        border-right: 1px solid rgba(148, 163, 184, 0.12);
         color: var(--text-default);
+        white-space: nowrap;
+        transition: background-color 0.18s ease, filter 0.15s ease;
     }
 
-    /* Ensure text is pure white in dark mode */
-    body.dark-mode table td,
-    body.dark-mode table th {
-        color: #FFFFFF !important;
+    #planContainer table td:last-child {
+        border-right: none;
     }
 
-    /* Timestamp styling for dark mode */
-    body.dark-mode #planTimestamp {
-        color: #aaaaaa;
+    #planContainer table tr:last-child td {
+        border-bottom: none;
     }
 
+    #planContainer table tr:hover td {
+        filter: brightness(0.97);
+    }
+
+    body.dark-mode #planContainer table tr:hover td {
+        filter: brightness(1.08);
+    }
+
+    /* Alert banners */
+    .plan-alert {
+        display: none;
+        padding: 10px 14px;
+        border-radius: var(--ui-radius-md, 10px);
+        margin-bottom: 12px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .plan-alert-warn {
+        background: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fcd34d;
+    }
+    .plan-alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #fca5a5;
+    }
+    body.dark-mode .plan-alert-warn {
+        background: rgba(245, 158, 11, 0.16);
+        color: #fcd34d;
+        border-color: rgba(245, 158, 11, 0.35);
+    }
+    body.dark-mode .plan-alert-error {
+        background: rgba(239, 68, 68, 0.16);
+        color: #fca5a5;
+        border-color: rgba(239, 68, 68, 0.35);
+    }
+
+    /* Dropdown menus */
     .dropdown {
         position: relative;
         display: inline-block;
@@ -6379,41 +6771,45 @@ def get_plan_css():
     .dropdown-content {
         display: none;
         position: absolute;
-        background-color: #f9f9f9;
-        min-width: 220px;
-        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        background-color: var(--ui-surface, #ffffff);
+        min-width: 230px;
+        border: 1px solid var(--border-color);
+        box-shadow: var(--ui-shadow-lg);
         z-index: 2001;
-        border-radius: 4px;
+        border-radius: var(--ui-radius-md, 10px);
         padding: 12px;
         box-sizing: border-box;
     }
 
     .dropdown-content a {
-        color: black;
-        padding: 10px 12px;
+        color: var(--text-default);
+        padding: 8px 12px;
         text-decoration: none;
         display: block;
         cursor: pointer;
-        border-radius: 3px;
-        margin: 4px 0;
+        border-radius: var(--ui-radius-sm, 6px);
+        margin: 2px 0;
+        font-size: 13px;
+        font-weight: 500;
+        transition: background-color 0.15s ease;
     }
 
     .dropdown-content a:hover {
-        background-color: #f1f1f1;
+        background-color: var(--ui-surface-subtle, #f1f5f9);
     }
 
     .dropdown-content label {
         display: block;
         margin-bottom: 6px;
-        font-weight: 500;
-        color: #333;
-        font-size: 13px;
+        font-weight: 600;
+        color: var(--ui-text-secondary, #334155);
+        font-size: 12px;
     }
 
     .clickable-time-cell {
         cursor: pointer;
         position: relative;
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, filter 0.15s;
         z-index: 1;
     }
 
@@ -6425,7 +6821,7 @@ def get_plan_css():
     .clickable-state-cell {
         cursor: pointer;
         position: relative;
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, filter 0.15s;
         z-index: 1;
     }
 
@@ -6434,238 +6830,251 @@ def get_plan_css():
     }
 
     .clickable-state-cell:hover {
-        filter: brightness(0.9);
+        filter: brightness(0.94);
     }
 
     .clickable-state-cell:focus-visible {
-        outline: 2px solid #2196F3;
+        outline: 2px solid #3b82f6;
         outline-offset: -2px;
     }
 
     body.dark-mode .clickable-state-cell:hover {
-        filter: brightness(1.2);
+        filter: brightness(1.15);
     }
 
     .reason-text {
         font-size: 13px;
-        line-height: 1.4;
-        color: #333;
+        line-height: 1.45;
+        color: var(--text-default);
         max-width: 260px;
-    }
-
-    body.dark-mode .reason-text {
-        color: #eee;
+        white-space: normal;
     }
 
     .clickable-time-cell:hover {
-        filter: brightness(0.9);
+        filter: brightness(0.94);
     }
 
     body.dark-mode .clickable-time-cell:hover {
-        filter: brightness(1.2);
+        filter: brightness(1.15);
     }
 
-    /* Dark mode styles */
     body.dark-mode .dropdown-content {
-        background-color: #333;
-        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+        background-color: var(--ui-surface, #1e293b);
+        border-color: var(--border-color);
+        box-shadow: var(--ui-shadow-lg);
     }
 
     body.dark-mode .dropdown-content a {
-        color: #e0e0e0;
+        color: var(--text-default);
     }
 
     body.dark-mode .dropdown-content a:hover {
-        background-color: #444;
+        background-color: var(--ui-surface-hover, #334155);
     }
 
-    body.dark-mode .dropdown-content label {
-        color: #e0e0e0;
+    body.dark-mode .dropdown-content label,
+    body.dark-mode .dropdown-content div {
+        color: var(--text-default);
     }
 
     /* ============================
-   Override cell styling
-   ============================ */
+       Override cell styling (Modern semantic tints)
+       ============================ */
 
-    /* Generic fallback */
     .override-active {
         position: relative;
-        background-color: #FFC0CB !important; /* Light pink */
+        background-color: #fce7f3 !important;
+        color: #9d174d !important;
+        font-weight: 600;
     }
     body.dark-mode .override-active {
-        background-color: #93264c !important; /* Dark pink */
+        background-color: rgba(236, 72, 153, 0.24) !important;
+        color: #f9a8d4 !important;
     }
 
-    /* Manual Charge */
     .override-charge {
         position: relative;
-        background-color: #3AEE85 !important; /* Green (same as charging) */
+        background-color: #bbf7d0 !important;
+        color: #14532d !important;
+        font-weight: 600;
     }
     body.dark-mode .override-charge {
-        background-color: #247e59 !important;
+        background-color: rgba(16, 185, 129, 0.28) !important;
+        color: #6ee7b7 !important;
     }
 
-    /* Manual Export */
     .override-export {
         position: relative;
-        background-color: #FFFF00 !important; /* Bright yellow */
+        background-color: #fef08a !important;
+        color: #713f12 !important;
+        font-weight: 600;
     }
     body.dark-mode .override-export {
-        background-color: #999900 !important;
+        background-color: rgba(234, 179, 8, 0.26) !important;
+        color: #fde047 !important;
     }
 
-    /* Manual Demand */
     .override-demand {
         position: relative;
-        background-color: #F18261 !important; /* Red-orange (high demand) */
+        background-color: #fecaca !important;
+        color: #991b1b !important;
+        font-weight: 600;
     }
     body.dark-mode .override-demand {
-        background-color: #7e2e1f !important;
+        background-color: rgba(239, 68, 68, 0.26) !important;
+        color: #fca5a5 !important;
     }
 
-    /* Manual Freeze Charge (improved visibility) */
     .override-freeze-charge {
         position: relative;
-        background-color: #C0C0C0 !important; /* Medium gray for light mode */
+        background-color: #e2e8f0 !important;
+        color: #334155 !important;
+        font-weight: 600;
     }
     body.dark-mode .override-freeze-charge {
-        background-color: #888888 !important; /* Lighter gray for dark mode */
+        background-color: rgba(148, 163, 184, 0.24) !important;
+        color: #cbd5e1 !important;
     }
 
-    /* Manual Freeze Export */
     .override-freeze-export {
         position: relative;
-        background-color: #AAAAAA !important; /* Darker gray */
+        background-color: #cbd5e1 !important;
+        color: #1e293b !important;
+        font-weight: 600;
     }
     body.dark-mode .override-freeze-export {
-        background-color: #444444 !important;
+        background-color: rgba(100, 116, 139, 0.28) !important;
+        color: #cbd5e1 !important;
     }
 
     /* Rate input field styles */
     .dropdown-content input[type="number"] {
-        background-color: #fff;
-        color: #333;
-        border: 1px solid #ccc;
+        background-color: var(--ui-surface-subtle, #f8fafc);
+        color: var(--text-default);
+        border: 1px solid var(--ui-border-strong, #cbd5e1);
         width: 100%;
         padding: 8px 10px;
-        border-radius: 4px;
+        border-radius: var(--ui-radius-sm, 6px);
         box-sizing: border-box;
-        font-size: 14px;
+        font-size: 13px;
         margin-bottom: 8px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     .dropdown-content input[type="number"]:focus {
         outline: none;
-        border-color: #4CAF50;
-        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        border-color: var(--ui-accent, #10b981);
+        box-shadow: 0 0 0 3px var(--ui-accent-soft, rgba(16, 185, 129, 0.18));
     }
 
     .dropdown-content button {
-        background-color: #4CAF50;
-        color: white;
+        background-color: var(--ui-accent, #10b981);
+        color: #ffffff;
         border: none;
         cursor: pointer;
-        width: 100%;{
-        padding: 12px;
+        width: 100%;
+        padding: 8px 12px;
+        border-radius: var(--ui-radius-sm, 6px);
+        font-size: 13px;
+        font-weight: 500;
     }
 
-    body.dark-mode .dropdown-content input[type="number"] {
-        background-color: #444;
-        color: #e0e0e0;
-        border-color: #666;
-    }
-
-    body.dark-mode .dropdown-content input[type="number"]:focus {
-        border-color: #4CAF50;
-        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
-    }
-
-    body.dark-mode .dropdown-content button {
-        background-color: #4CAF50;
-        color: white !important;
-    }
-
-    body.dark-mode .dropdown-content button:hover {
-        background-color: #45a049;
-        color: white !important;
-    }
-
-    body.dark-mode .dropdown-content button:active {
-        background-color: #3d8b40 and button */
-    body.dark-mode .dropdown-content input[type="number"] {
-        background-color: #444;
-        color: #e0e0e0;
-        border-color: #666;
-    }
-
-    body.dark-mode .dropdown-content input[type="number"]:focus {
-        border-color: #4CAF50;
-    }
-
-    body.dark-mode .dropdown-content button {
-        background-color: #4CAF50;
-        color: white !important;
-    }
-
-    body.dark-mode .dropdown-content button:hover {
-        background-color: #45a049;
-        color: white !important;
-    }
-
-    /* Dark mode styles for labels and text in dropdown */
-    body.dark-mode .dropdown-content label {
-        color: #e0e0e0 !important;
-    }
-
-    body.dark-mode .dropdown-content div {
-        color: #e0e0e0 !important;
+    .dropdown-content button:hover {
+        background-color: var(--ui-accent-hover, #059669);
     }
     </style>
 
     <script>
-    // Function to darken a hex color for dark mode
-    function darkenColor(hex, factor = 0.4) {
-        // Remove # if present
-        hex = hex.replace('#', '');
+    // Modern accessible palette mapping legacy Predbat cell hex colours to refined light/dark tints
+    const MODERN_LIGHT_PALETTE = {
+        'FFFFFF': { bg: '#ffffff', fg: '#0f172a' },
+        'FFF':    { bg: '#ffffff', fg: '#0f172a' },
+        'F18261': { bg: '#fee2e2', fg: '#991b1b' }, // High import rate / high load / low SoC
+        'FF0000': { bg: '#fecaca', fg: '#991b1b' },
+        'FF6666': { bg: '#fee2e2', fg: '#991b1b' },
+        'FFCCCC': { bg: '#fef2f2', fg: '#991b1b' },
+        '3AEE85': { bg: '#d1fae5', fg: '#065f46' }, // Low import rate / charging / healthy SoC
+        'A0F0A0': { bg: '#dcfce7', fg: '#166534' }, // Low load
+        '00FF00': { bg: '#bbf7d0', fg: '#14532d' },
+        'C0FFC0': { bg: '#dcfce7', fg: '#166534' },
+        'FFFFAA': { bg: '#fef9c3', fg: '#854d0e' }, // Medium rate / warm export
+        'FFFF00': { bg: '#fef08a', fg: '#854d0e' }, // PV / export / medium SoC
+        'FFFF66': { bg: '#fef08a', fg: '#854d0e' },
+        'FFF2B0': { bg: '#fef3c7', fg: '#92400e' }, // Billing event
+        '74C1FF': { bg: '#e0f2fe', fg: '#075985' }, // Free / negative import rate
+        '00BFFF': { bg: '#e0f2fe', fg: '#075985' },
+        'EEF6FF': { bg: '#eff6ff', fg: '#1e40af' }, // Billed
+        'CCCCCC': { bg: '#f1f5f9', fg: '#64748b' }, // Zero PV / idle
+        'C0C0C0': { bg: '#f1f5f9', fg: '#475569' },
+        'D0D0D0': { bg: '#f1f5f9', fg: '#475569' },
+        'AAAAAA': { bg: '#e2e8f0', fg: '#334155' },
+        'FF9900': { bg: '#ffedd5', fg: '#9a3412' }, // Orange accent
+        'FFA500': { bg: '#ffedd5', fg: '#9a3412' },
+        'FFCC99': { bg: '#ffedd5', fg: '#9a3412' },
+        'CC99FF': { bg: '#f3e8ff', fg: '#6b21a8' }, // Car / purple
+        'DDA0DD': { bg: '#f3e8ff', fg: '#6b21a8' }
+    };
 
-        // Parse RGB
+    const MODERN_DARK_PALETTE = {
+        'FFFFFF': { bg: '#1e293b', fg: '#e2e8f0' },
+        'FFF':    { bg: '#1e293b', fg: '#e2e8f0' },
+        'F18261': { bg: 'rgba(239, 68, 68, 0.22)', fg: '#fca5a5' },
+        'FF0000': { bg: 'rgba(239, 68, 68, 0.28)', fg: '#fca5a5' },
+        'FF6666': { bg: 'rgba(239, 68, 68, 0.22)', fg: '#fca5a5' },
+        'FFCCCC': { bg: 'rgba(239, 68, 68, 0.16)', fg: '#fecaca' },
+        '3AEE85': { bg: 'rgba(16, 185, 129, 0.22)', fg: '#6ee7b7' },
+        'A0F0A0': { bg: 'rgba(34, 197, 94, 0.18)', fg: '#86efac' },
+        '00FF00': { bg: 'rgba(34, 197, 94, 0.24)', fg: '#86efac' },
+        'C0FFC0': { bg: 'rgba(34, 197, 94, 0.16)', fg: '#86efac' },
+        'FFFFAA': { bg: 'rgba(234, 179, 8, 0.18)', fg: '#fde047' },
+        'FFFF00': { bg: 'rgba(234, 179, 8, 0.22)', fg: '#fde047' },
+        'FFFF66': { bg: 'rgba(234, 179, 8, 0.20)', fg: '#fde047' },
+        'FFF2B0': { bg: 'rgba(245, 158, 11, 0.22)', fg: '#fcd34d' },
+        '74C1FF': { bg: 'rgba(56, 189, 248, 0.22)', fg: '#7dd3fc' },
+        '00BFFF': { bg: 'rgba(56, 189, 248, 0.22)', fg: '#7dd3fc' },
+        'EEF6FF': { bg: 'rgba(59, 130, 246, 0.18)', fg: '#93c5fd' },
+        'CCCCCC': { bg: '#162032', fg: '#64748b' },
+        'C0C0C0': { bg: 'rgba(148, 163, 184, 0.16)', fg: '#94a3b8' },
+        'D0D0D0': { bg: 'rgba(148, 163, 184, 0.16)', fg: '#94a3b8' },
+        'AAAAAA': { bg: 'rgba(100, 116, 139, 0.22)', fg: '#cbd5e1' },
+        'FF9900': { bg: 'rgba(249, 115, 22, 0.22)', fg: '#fdba74' },
+        'FFA500': { bg: 'rgba(249, 115, 22, 0.22)', fg: '#fdba74' },
+        'FFCC99': { bg: 'rgba(249, 115, 22, 0.18)', fg: '#fdba74' },
+        'CC99FF': { bg: 'rgba(168, 85, 247, 0.22)', fg: '#d8b4fe' },
+        'DDA0DD': { bg: 'rgba(168, 85, 247, 0.22)', fg: '#d8b4fe' }
+    };
+
+    // Function to darken a hex color for dark mode (fallback for unmapped colours)
+    function darkenColor(hex, factor = 0.35) {
+        hex = hex.replace('#', '');
         const r = parseInt(hex.substring(0, 2), 16);
         const g = parseInt(hex.substring(2, 4), 16);
         const b = parseInt(hex.substring(4, 6), 16);
-
-        // Darken by reducing brightness
         const newR = Math.round(r * factor);
         const newG = Math.round(g * factor);
         const newB = Math.round(b * factor);
-
-        // Convert back to hex
         return '#' + [newR, newG, newB].map(x => {
-            const hex = x.toString(16);
-            return hex.length === 1 ? '0' + hex : hex;
+            const h = x.toString(16);
+            return h.length === 1 ? '0' + h : h;
         }).join('');
     }
 
-    // Check if a color is white or very light (close to white)
     function isWhiteColor(hex) {
-        // Remove # if present
         hex = hex.replace('#', '').toUpperCase();
-
-        // Check if it's white or very close to white
         return hex === 'FFFFFF' || hex === 'FFF';
     }
 
-    // Check if dark mode is active
     function isDarkMode() {
         return document.body.classList.contains('dark-mode');
     }
 
-    // Apply colors to table cells based on mode
+    // Apply modern semantic colors to table cells based on light/dark mode
     function updateTableColors() {
         const cells = document.querySelectorAll('td[bgcolor]');
         const darkMode = isDarkMode();
+        const palette = darkMode ? MODERN_DARK_PALETTE : MODERN_LIGHT_PALETTE;
 
         cells.forEach(cell => {
-            // Skip cells with override classes - they have their own dark mode CSS
             if (cell.classList.contains('override-charge') ||
                 cell.classList.contains('override-export') ||
                 cell.classList.contains('override-freeze-charge') ||
@@ -6675,18 +7084,19 @@ def get_plan_css():
                 return;
             }
 
-            const bgColor = cell.getAttribute('bgcolor');
-            if (bgColor) {
-                if (darkMode) {
-                    // Convert white to black, darken other colors
-                    if (isWhiteColor(bgColor)) {
-                        cell.style.backgroundColor = '#1e1e1e';
-                    } else {
-                        cell.style.backgroundColor = darkenColor(bgColor);
-                    }
+            const rawBg = cell.getAttribute('bgcolor');
+            if (rawBg) {
+                const key = rawBg.replace('#', '').trim().toUpperCase();
+                const mapped = palette[key];
+                if (mapped) {
+                    cell.style.backgroundColor = mapped.bg;
+                    cell.style.color = mapped.fg;
+                } else if (darkMode) {
+                    cell.style.backgroundColor = isWhiteColor(rawBg) ? '#1e293b' : darkenColor(rawBg);
+                    cell.style.color = '#f1f5f9';
                 } else {
-                    // Keep original color in light mode
-                    cell.style.backgroundColor = bgColor;
+                    cell.style.backgroundColor = rawBg;
+                    cell.style.color = '#0f172a';
                 }
             }
         });
@@ -6697,6 +7107,9 @@ def get_plan_css():
         mutations.forEach((mutation) => {
             if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
                 updateTableColors();
+                if (typeof renderPlanChart === 'function') {
+                    renderPlanChart();
+                }
             }
         });
     });
@@ -8065,15 +8478,9 @@ def get_plan_renderer_js():
             loadDebugHistoryData().then(refreshPlan);
         }
 
-        // Update button styling
+        // Update button styling via CSS classes for smooth transitions
         document.querySelectorAll('.view-button').forEach(btn => {
-            if (btn.dataset.view === view) {
-                btn.style.backgroundColor = '#4CAF50';
-                btn.style.color = 'white';
-            } else {
-                btn.style.backgroundColor = '#f0f0f0';
-                btn.style.color = 'black';
-            }
+            btn.classList.toggle('active', btn.dataset.view === view);
         });
 
         // The History view's day picker
@@ -8083,7 +8490,7 @@ def get_plan_renderer_js():
         const debugToggleLabel = document.getElementById('debugToggleLabel');
         if (debugToggleLabel) {
             if (view === 'plan') {
-                debugToggleLabel.style.display = 'block';
+                debugToggleLabel.style.display = 'inline-flex';
             } else {
                 debugToggleLabel.style.display = 'none';
             }
@@ -8094,6 +8501,249 @@ def get_plan_renderer_js():
 
         // Render the selected view
         refreshPlan();
+    }
+
+    // Interactive Plan & Baseline Comparison Chart state
+    let planChartInstance = null;
+    let planChartMode = localStorage.getItem('predbatPlanChartMode') || 'soc_rates';
+    let baselineMetric = localStorage.getItem('predbatBaselineMetric') || 'cumulative_cost';
+
+    function isPlanChartVisible() {
+        return localStorage.getItem('predbatPlanChartVisible') === 'true';
+    }
+
+    function togglePlanChart() {
+        const next = !isPlanChartVisible();
+        localStorage.setItem('predbatPlanChartVisible', String(next));
+        syncPlanChartVisibility();
+        if (next) {
+            renderPlanChart();
+        }
+    }
+
+    function syncPlanChartVisibility() {
+        const section = document.getElementById('planChartSection');
+        const btn = document.getElementById('planChartToggleBtn');
+        const visible = isPlanChartVisible();
+        if (section) {
+            section.classList.toggle('collapsed', !visible);
+        }
+        if (btn) {
+            btn.classList.toggle('active', visible);
+        }
+    }
+
+    function setPlanChartMode(mode) {
+        planChartMode = mode;
+        localStorage.setItem('predbatPlanChartMode', mode);
+        document.querySelectorAll('.chart-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+        const metricGroup = document.getElementById('baselineMetricGroup');
+        if (metricGroup) {
+            metricGroup.style.display = (mode === 'comparison') ? 'inline-flex' : 'none';
+        }
+        renderPlanChart();
+    }
+
+    function setBaselineMetric(metric) {
+        baselineMetric = metric;
+        localStorage.setItem('predbatBaselineMetric', metric);
+        document.querySelectorAll('.chart-metric-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.metric === metric);
+        });
+        renderPlanChart();
+    }
+
+    function renderPlanChart() {
+        if (!isPlanChartVisible() || typeof ApexCharts === 'undefined') {
+            return;
+        }
+        const chartEl = document.getElementById('planInteractiveChart');
+        const kpiEl = document.getElementById('planChartKpiStrip');
+        if (!chartEl) {
+            return;
+        }
+
+        // Sync active pills
+        document.querySelectorAll('.chart-mode-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === planChartMode);
+        });
+        document.querySelectorAll('.chart-metric-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.metric === baselineMetric);
+        });
+        const metricGroup = document.getElementById('baselineMetricGroup');
+        if (metricGroup) {
+            metricGroup.style.display = (planChartMode === 'comparison') ? 'inline-flex' : 'none';
+        }
+
+        const dark = document.body.classList.contains('dark-mode');
+        const textColor = dark ? '#94a3b8' : '#64748b';
+        const gridColor = dark ? '#334155' : '#e2e8f0';
+
+        if (planChartInstance) {
+            try { planChartInstance.destroy(); } catch (e) {}
+            planChartInstance = null;
+        }
+        chartEl.innerHTML = '';
+        if (kpiEl) {
+            kpiEl.innerHTML = '';
+            kpiEl.style.display = 'none';
+        }
+
+        if (planChartMode === 'comparison') {
+            const withData = window.yesterdayData;
+            const withoutData = window.baselineData;
+            if (!withData || !withData.rows || !withoutData || !withoutData.rows) {
+                chartEl.innerHTML = `<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">Baseline comparison data (With vs. Without Predbat) is not available yet. Once yesterday's history is calculated, both curves will appear here.</div>`;
+                return;
+            }
+            const major = (withData.currency_symbols && withData.currency_symbols[0]) || '£';
+            const minor = (withData.currency_symbols && withData.currency_symbols[1]) || 'p';
+            const fmtMoney = (val) => {
+                if (val === null || val === undefined || isNaN(val)) return '—';
+                return (val < 0 ? '-' : '') + major + Math.abs(val).toFixed(2);
+            };
+            const withRows = withData.rows;
+            const withoutRows = withoutData.rows;
+            const withTotal = withRows.length ? Number(withRows[withRows.length - 1].total_cost || 0) : 0;
+            const withoutTotal = withoutRows.length ? Number(withoutRows[withoutRows.length - 1].total_cost || 0) : 0;
+            const saving = withoutTotal - withTotal;
+            const pct = withoutTotal > 0 ? ((saving / withoutTotal) * 100).toFixed(1) : null;
+
+            if (kpiEl) {
+                kpiEl.style.display = 'grid';
+                kpiEl.innerHTML =
+                    `<div class="plan-kpi-card"><div class="plan-kpi-label">With Predbat</div><div class="plan-kpi-value">${fmtMoney(withTotal)}</div><div class="plan-kpi-sub">Optimised battery schedule</div></div>` +
+                    `<div class="plan-kpi-card"><div class="plan-kpi-label">Without Predbat (Baseline)</div><div class="plan-kpi-value">${fmtMoney(withoutTotal)}</div><div class="plan-kpi-sub">Unoptimised baseline</div></div>` +
+                    `<div class="plan-kpi-card kpi-highlight"><div class="plan-kpi-label">Predbat Saving</div><div class="plan-kpi-value">${saving >= 0 ? '+' : ''}${fmtMoney(saving)}</div><div class="plan-kpi-sub">${pct !== null ? pct + '% vs baseline' : 'Compared to baseline'}</div></div>`;
+            }
+
+            let series = [];
+            let yTitle = '';
+            let yFormatter = (v) => (v !== null && v !== undefined) ? v.toFixed(2) : '';
+            if (baselineMetric === 'soc') {
+                yTitle = 'Battery SoC (%)';
+                yFormatter = (v) => (v !== null && v !== undefined) ? v.toFixed(0) + '%' : '';
+                series = [
+                    { name: 'With Predbat (SoC %)', data: withRows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.soc_percent ?? 0) })) },
+                    { name: 'Without Predbat / Baseline (SoC %)', data: withoutRows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.soc_percent ?? 0) })) }
+                ];
+            } else if (baselineMetric === 'slot_cost') {
+                yTitle = `Slot Cost (${minor})`;
+                yFormatter = (v) => (v !== null && v !== undefined) ? v.toFixed(1) + minor : '';
+                series = [
+                    { name: 'With Predbat (Slot Cost)', type: 'column', data: withRows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.cost_change ?? 0) })) },
+                    { name: 'Without Predbat / Baseline (Slot Cost)', type: 'column', data: withoutRows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.cost_change ?? 0) })) }
+                ];
+            } else {
+                yTitle = `Cumulative Cost (${major})`;
+                yFormatter = (v) => fmtMoney(v);
+                series = [
+                    { name: 'With Predbat', data: withRows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.total_cost ?? 0) })) },
+                    { name: 'Without Predbat (Baseline)', data: withoutRows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.total_cost ?? 0) })) }
+                ];
+            }
+
+            const options = {
+                chart: {
+                    type: baselineMetric === 'slot_cost' ? 'bar' : 'area',
+                    height: 310,
+                    background: 'transparent',
+                    fontFamily: 'inherit',
+                    animations: { enabled: true, easing: 'easeinout', speed: 380 },
+                    toolbar: { show: true, tools: { download: true, zoom: true, pan: true, reset: true } }
+                },
+                colors: ['#10b981', '#f97316'],
+                stroke: { curve: 'smooth', width: baselineMetric === 'slot_cost' ? 0 : [3, 2.5], dashArray: baselineMetric === 'slot_cost' ? 0 : [0, 5] },
+                fill: {
+                    type: baselineMetric === 'slot_cost' ? 'solid' : 'gradient',
+                    opacity: baselineMetric === 'slot_cost' ? 0.85 : 1,
+                    gradient: { shadeIntensity: 1, opacityFrom: 0.28, opacityTo: 0.02, stops: [0, 95, 100] }
+                },
+                plotOptions: { bar: { borderRadius: 4, columnWidth: '68%' } },
+                dataLabels: { enabled: false },
+                grid: { borderColor: gridColor, strokeDashArray: 4 },
+                xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { colors: textColor } } },
+                yaxis: { title: { text: yTitle, style: { color: textColor } }, labels: { style: { colors: textColor }, formatter: yFormatter } },
+                legend: { position: 'bottom', labels: { colors: textColor } },
+                tooltip: { theme: dark ? 'dark' : 'light', x: { format: 'ddd HH:mm' }, y: { formatter: yFormatter } },
+                series: series
+            };
+            planChartInstance = new ApexCharts(chartEl, options);
+            planChartInstance.render();
+            return;
+        }
+
+        const data = currentViewData();
+        if (!data || !data.rows || !data.rows.length) {
+            chartEl.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">No plan rows available to plot yet.</div>';
+            return;
+        }
+        const rows = data.rows;
+        const minor = (data.currency_symbols && data.currency_symbols[1]) || 'p';
+
+        if (planChartMode === 'energy') {
+            const series = [
+                { name: 'PV (kWh)', type: 'area', data: rows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.pv_forecast ?? 0) })) },
+                { name: 'Load (kWh)', type: 'line', data: rows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.load_forecast ?? 0) })) }
+            ];
+            if (data.num_cars > 0) {
+                series.push({ name: 'Car (kWh)', type: 'column', data: rows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.car_charging ?? 0) })) });
+            }
+            const options = {
+                chart: { type: 'line', height: 310, background: 'transparent', fontFamily: 'inherit', animations: { enabled: true, easing: 'easeinout', speed: 380 } },
+                colors: ['#f59e0b', '#6366f1', '#0ea5e9'],
+                stroke: { curve: 'smooth', width: [2.5, 2.5, 0] },
+                fill: { opacity: [0.22, 1, 0.75] },
+                plotOptions: { bar: { borderRadius: 4, columnWidth: '60%' } },
+                dataLabels: { enabled: false },
+                grid: { borderColor: gridColor, strokeDashArray: 4 },
+                xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { colors: textColor } } },
+                yaxis: { title: { text: 'Energy (kWh)', style: { color: textColor } }, labels: { style: { colors: textColor }, formatter: v => (v !== null && v !== undefined) ? v.toFixed(2) : '' } },
+                legend: { position: 'bottom', labels: { colors: textColor } },
+                tooltip: { theme: dark ? 'dark' : 'light', x: { format: 'ddd HH:mm' } },
+                series: series
+            };
+            planChartInstance = new ApexCharts(chartEl, options);
+            planChartInstance.render();
+            return;
+        }
+
+        // Default: Battery SoC % & Import/Export Rates
+        const options = {
+            chart: { type: 'line', height: 310, background: 'transparent', fontFamily: 'inherit', animations: { enabled: true, easing: 'easeinout', speed: 380 } },
+            colors: ['#10b981', '#ef4444', '#0ea5e9'],
+            stroke: { curve: ['smooth', 'stepline', 'stepline'], width: [3, 2, 2] },
+            fill: { opacity: [0.22, 1, 1] },
+            dataLabels: { enabled: false },
+            grid: { borderColor: gridColor, strokeDashArray: 4 },
+            xaxis: { type: 'datetime', labels: { datetimeUTC: false, style: { colors: textColor } } },
+            yaxis: [
+                {
+                    seriesName: 'Battery SoC %',
+                    min: 0,
+                    max: 100,
+                    title: { text: 'SoC (%)', style: { color: textColor } },
+                    labels: { style: { colors: textColor }, formatter: v => Math.round(v) + '%' }
+                },
+                {
+                    seriesName: [`Import (${minor})`, `Export (${minor})`],
+                    opposite: true,
+                    title: { text: `Rate (${minor}/kWh)`, style: { color: textColor } },
+                    labels: { style: { colors: textColor }, formatter: v => (v !== null && v !== undefined) ? v.toFixed(1) : '' }
+                }
+            ],
+            legend: { position: 'bottom', labels: { colors: textColor } },
+            tooltip: { theme: dark ? 'dark' : 'light', x: { format: 'ddd HH:mm' } },
+            series: [
+                { name: 'Battery SoC %', type: 'area', data: rows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.soc_percent ?? 0) })) },
+                { name: `Import (${minor})`, type: 'line', data: rows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.import_rate ?? 0) })) },
+                { name: `Export (${minor})`, type: 'line', data: rows.map(r => ({ x: new Date(r.time).getTime(), y: Number(r.export_rate ?? 0) })) }
+            ]
+        };
+        planChartInstance = new ApexCharts(chartEl, options);
+        planChartInstance.render();
     }
 
     // Refresh plan display
@@ -8122,6 +8772,7 @@ def get_plan_renderer_js():
             }
             // A warning raised for another view does not apply to this one
             checkStaleness(null);
+            renderPlanChart();
             return;
         }
 
@@ -8136,8 +8787,12 @@ def get_plan_renderer_js():
         const showHistoryLinks = (currentView === 'yesterday');
         container.innerHTML = (currentView === 'yesterday' ? renderBillingSummary(data) : '') + renderPlanTable(data, overrides, showDebug, editable, showHistoryLinks);
 
-        // Apply dark mode colors if needed
+        // Apply modern semantic colors
         updateTableColors();
+
+        // Update interactive chart if open
+        syncPlanChartVisibility();
+        renderPlanChart();
 
         // Apply responsive sizing
         adjustResponsiveSizes();
@@ -8165,18 +8820,17 @@ def get_plan_renderer_js():
             if (historyDay && !days.includes(historyDay)) {
                 historyDay = null;
             }
-            const buttonStyle = 'padding: 4px 10px; border-radius: 3px; font-size: 13px; border: 1px solid #ddd; cursor: pointer;';
             // A day with a saving session, free electricity or Axle event gets a dot: its bill may not match Predbat's pricing
-            const eventMark = (labels) => (labels && labels.length) ? ` <span style="color: #C08000;" title="${escapeAttr(labels.join(', ') + ' on this day: the bill may not show it the way Predbat priced it')}">&#9679;</span>` : '';
+            const eventMark = (labels) => (labels && labels.length) ? ` <span style="color: #d97706;" title="${escapeAttr(labels.join(', ') + ' on this day: the bill may not show it the way Predbat priced it')}">&#9679;</span>` : '';
             const dayEvents = window.historyDayEvents || {};
             let html = '';
             for (const day of days) {
                 const label = new Date(day + 'T12:00:00').toLocaleDateString([], {weekday: 'short', day: 'numeric', month: 'short'});
                 const selected = historyDay === day;
-                html += `<button class="history-day-button" onclick="selectHistoryDay('${day}')" style="${buttonStyle} background-color: ${selected ? '#4CAF50' : '#f0f0f0'}; color: ${selected ? 'white' : 'black'};">${label}${eventMark(dayEvents[day])}</button>`;
+                html += `<button class="history-day-button${selected ? ' active' : ''}" onclick="selectHistoryDay('${day}')">${label}${eventMark(dayEvents[day])}</button>`;
             }
             const latest = historyDay === null;
-            html += `<button class="history-day-button" onclick="selectHistoryDay(null)" style="${buttonStyle} background-color: ${latest ? '#4CAF50' : '#f0f0f0'}; color: ${latest ? 'white' : 'black'};">Yesterday + today${eventMark((window.yesterdayData || {}).history_events)}</button>`;
+            html += `<button class="history-day-button${latest ? ' active' : ''}" onclick="selectHistoryDay(null)">Yesterday + today${eventMark((window.yesterdayData || {}).history_events)}</button>`;
             picker.innerHTML = html;
             picker.style.display = 'flex';
         } else {
@@ -8435,260 +9089,349 @@ if (getDarkModePreference()) {
 }
 </script>
 <style>
-    /* Paint the correct background before the external font/chart resources below (which block
-       rendering while they load) have a chance to delay the full stylesheet - otherwise a slow or
-       uncached CDN fetch leaves the page showing its default white background until they resolve,
-       flashing bright white on every page load/refresh even with dark mode enabled (batpred#2256). */
-    html { background-color: #ffffff; }
-    html.dark-mode { background-color: #121212; }
-    body { background-color: #ffffff; color: #333; }
-    html.dark-mode body { background-color: #121212; color: #e0e0e0; }
+    /* Modern design tokens — painted before external resources to prevent flash of unstyled content (batpred#2256) */
+    :root {
+        --ui-bg: #f8fafc;
+        --ui-surface: #ffffff;
+        --ui-surface-subtle: #f1f5f9;
+        --ui-surface-hover: #e2e8f0;
+        --ui-border: #e2e8f0;
+        --ui-border-strong: #cbd5e1;
+        --ui-text: #0f172a;
+        --ui-text-secondary: #334155;
+        --ui-text-muted: #64748b;
+        --ui-accent: #10b981;
+        --ui-accent-hover: #059669;
+        --ui-accent-soft: #ecfdf5;
+        --ui-accent-text: #065f46;
+        --ui-danger: #ef4444;
+        --ui-danger-hover: #dc2626;
+        --ui-danger-soft: #fef2f2;
+        --ui-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+        --ui-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+        --ui-shadow-lg: 0 10px 28px rgba(15, 23, 42, 0.12);
+        --ui-radius-sm: 6px;
+        --ui-radius-md: 10px;
+        --ui-radius-lg: 14px;
+        --ui-radius-pill: 9999px;
+        --ui-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        --ui-glass: rgba(255, 255, 255, 0.86);
+    }
+    html.dark-mode, body.dark-mode {
+        --ui-bg: #0f172a;
+        --ui-surface: #1e293b;
+        --ui-surface-subtle: #162032;
+        --ui-surface-hover: #334155;
+        --ui-border: #334155;
+        --ui-border-strong: #475569;
+        --ui-text: #f1f5f9;
+        --ui-text-secondary: #cbd5e1;
+        --ui-text-muted: #94a3b8;
+        --ui-accent: #10b981;
+        --ui-accent-hover: #34d399;
+        --ui-accent-soft: rgba(16, 185, 129, 0.16);
+        --ui-accent-text: #6ee7b7;
+        --ui-danger: #f87171;
+        --ui-danger-hover: #ef4444;
+        --ui-danger-soft: rgba(239, 68, 68, 0.16);
+        --ui-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+        --ui-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+        --ui-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+        --ui-glass: rgba(15, 23, 42, 0.86);
+    }
+    html { background-color: var(--ui-bg); }
+    html.dark-mode { background-color: var(--ui-bg); }
+    body { background-color: var(--ui-bg); color: var(--ui-text); }
+    html.dark-mode body { background-color: var(--ui-bg); color: var(--ui-text); }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <style>
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
     body, html {
         margin: 0;
         padding: 0;
-        height: 100%;
-        border: 2px solid #ffffff;
-    }
-    html.dark-mode, html.dark-mode body {
-        border-color: #121212;
+        min-height: 100%;
     }
     body {
-        font-family: Arial, sans-serif;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
         text-align: left;
-        margin: 5px;
-        background-color: #ffffff;
-        color: #333;
+        padding: 72px 20px 32px 20px;
+        background-color: var(--ui-bg);
+        color: var(--ui-text);
+        -webkit-font-smoothing: antialiased;
+        transition: background-color var(--ui-transition), color var(--ui-transition);
     }
-    html.dark-mode body {
-        background-color: #121212;
-        color: #e0e0e0;
+    h1, h2, h3 {
+        color: var(--ui-text);
+        font-weight: 600;
+        letter-spacing: -0.015em;
     }
     h1 {
-        color: #4CAF50;
+        font-size: 1.5rem;
+        margin: 0 0 12px 0;
     }
     h2 {
-        color: #4CAF50;
-        display: inline
+        font-size: 1.15rem;
+        display: inline-block;
+        margin: 8px 0;
     }
     p {
         white-space: nowrap;
     }
+    a {
+        color: var(--ui-accent-hover);
+        transition: color var(--ui-transition);
+    }
+    a:hover {
+        color: var(--ui-accent);
+    }
     table {
-        padding: 1px;
-        border: 2px solid green;
-        border-spacing: 2px;
-        background-clip: padding-box;
+        border-collapse: separate;
+        border-spacing: 0;
+        background-color: var(--ui-surface);
+        border: 1px solid var(--ui-border);
+        border-radius: var(--ui-radius-md);
+        box-shadow: var(--ui-shadow-sm);
+        font-variant-numeric: tabular-nums;
     }
     th,
     td {
         text-align: left;
-        padding: 5px;
-        vertical-align: top;
+        padding: 8px 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--ui-border);
+    }
+    tr:last-child td {
+        border-bottom: none;
     }
     th {
-        background-color: #4CAF50;
-        color: white;
+        background-color: var(--ui-surface-subtle);
+        color: var(--ui-text-secondary);
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
     }
+    th:first-child { border-top-left-radius: var(--ui-radius-md); }
+    th:last-child { border-top-right-radius: var(--ui-radius-md); }
     .default, .cfg_default {
-        background-color: #ffffff;
+        background-color: var(--ui-surface);
     }
     .modified, .cfg_modified {
-        background-color: #ffcccc;
+        background-color: var(--ui-danger-soft);
     }
 
-    /* Apply dark mode to html element as well for earlier styling */
-    html.dark-mode,
-    body.dark-mode {
-        background-color: #121212;
-        color: #e0e0e0;
-        border: 2px solid #121212;
-    }
-    body.dark-mode table {
-        border-color: #333;
-    }
-    body.dark-mode th {
-        background-color: #333;
-        color: #e0e0e0;
-    }
-    body.dark-mode .default,
-    body.dark-mode .cfg_default {
-        background-color: #121212;
-    }
-    body.dark-mode .modified,
-    body.dark-mode .cfg_modified {
-        background-color: #662222;
-    }
     /* Dark mode link styles */
     body.dark-mode a {
-        color: #8cb4ff;
+        color: #60a5fa;
     }
     body.dark-mode a:visited {
-        color: #c58cff;
+        color: #a78bfa;
     }
     body.dark-mode a:hover {
-        color: #afd2ff;
+        color: #93c5fd;
     }
-    /* Dark mode chart styles */
+    /* Modern chart styles */
+    .apexcharts-canvas {
+        font-family: inherit !important;
+    }
+    .apexcharts-tooltip {
+        border-radius: var(--ui-radius-md) !important;
+        box-shadow: var(--ui-shadow-lg) !important;
+        border: 1px solid var(--ui-border) !important;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+    }
     body.dark-mode .apexcharts-legend-text {
-        color: #ffffff !important;
+        color: var(--ui-text-secondary) !important;
     }
     body.dark-mode .apexcharts-title-text {
-        fill: #ffffff !important;
+        fill: var(--ui-text) !important;
     }
     body.dark-mode .apexcharts-xaxis-label,
     body.dark-mode .apexcharts-yaxis-label {
-        fill: #e0e0e0 !important;
+        fill: var(--ui-text-muted) !important;
+    }
+    body.dark-mode .apexcharts-gridline {
+        stroke: var(--ui-border) !important;
     }
     /* Dark mode tooltip styles */
     body.dark-mode .apexcharts-tooltip {
-        background: #333 !important;
-        color: #e0e0e0 !important;
-        border: 1px solid #555 !important;
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+        border: 1px solid #334155 !important;
     }
     body.dark-mode .apexcharts-tooltip-title {
-        background: #444 !important;
-        color: #e0e0e0 !important;
-        border-bottom: 1px solid #555 !important;
+        background: #0f172a !important;
+        color: #f1f5f9 !important;
+        border-bottom: 1px solid #334155 !important;
     }
     body.dark-mode .apexcharts-tooltip-series-group {
-        border-bottom: 1px solid #555 !important;
+        border-bottom: 1px solid #334155 !important;
     }
     body.dark-mode .apexcharts-tooltip-text {
-        color: #e0e0e0 !important;
+        color: #f1f5f9 !important;
     }
     body.dark-mode .apexcharts-tooltip-text-y-value,
     body.dark-mode .apexcharts-tooltip-text-goals-value,
     body.dark-mode .apexcharts-tooltip-text-z-value {
-        color: #e0e0e0 !important;
+        color: #f1f5f9 !important;
     }
     body.dark-mode .apexcharts-tooltip-marker {
-        box-shadow: 0 0 0 1px #444 !important;
+        box-shadow: 0 0 0 1px #475569 !important;
     }
     body.dark-mode .apexcharts-tooltip-text-label {
-        color: #afd2ff !important;
+        color: #93c5fd !important;
     }
     body.dark-mode .apexcharts-xaxistooltip,
     body.dark-mode .apexcharts-yaxistooltip {
-        background: #333 !important;
-        color: #e0e0e0 !important;
-        border: 1px solid #555 !important;
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+        border: 1px solid #475569 !important;
+        border-radius: 6px !important;
     }
     body.dark-mode .apexcharts-xaxistooltip-text,
     body.dark-mode .apexcharts-yaxistooltip-text {
-        color: #e0e0e0 !important;
+        color: #f1f5f9 !important;
+    }
+    body.dark-mode .apexcharts-toolbar {
+        background: rgba(30, 41, 59, 0.92) !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+    }
+    body.dark-mode .apexcharts-toolbar svg {
+        fill: var(--ui-text-muted) !important;
+    }
+    body.dark-mode .apexcharts-toolbar svg:hover {
+        fill: var(--ui-text) !important;
+    }
+    body.dark-mode .apexcharts-menu {
+        background: #1e293b !important;
+        border: 1px solid #334155 !important;
+        color: #f1f5f9 !important;
+    }
+    body.dark-mode .apexcharts-menu-item:hover {
+        background: #334155 !important;
     }
 
-    /* Dark mode styles for restart button */
-    body.dark-mode button {
-        background-color: #cc3333 !important;
-        color: #e0e0e0 !important;
+    /* Modern baseline button styling */
+    button {
+        font-family: inherit;
+        border-radius: var(--ui-radius-sm);
+        transition: background-color var(--ui-transition), color var(--ui-transition), border-color var(--ui-transition), box-shadow var(--ui-transition), transform 0.12s ease;
     }
-
-    body.dark-mode button:hover {
-        background-color: #aa2222 !important;
+    button:active {
+        transform: translateY(0.5px);
     }
 
     /* Dashboard form controls styling */
     .dashboard-select {
-        border: 1px solid #ccc;
-        padding: 2px 4px;
-        border-radius: 3px;
-        background-color: #fff;
-        color: #333;
-        font-size: 14px;
+        border: 1px solid var(--ui-border-strong);
+        padding: 6px 10px;
+        border-radius: var(--ui-radius-sm);
+        background-color: var(--ui-surface);
+        color: var(--ui-text);
+        font-size: 13px;
+        font-family: inherit;
+        transition: border-color var(--ui-transition), box-shadow var(--ui-transition);
+    }
+    .dashboard-select:focus {
+        outline: none;
+        border-color: var(--ui-accent);
+        box-shadow: 0 0 0 3px var(--ui-accent-soft);
     }
 
     /* Toggle switch styles */
     .toggle-switch {
         position: relative;
         display: inline-block;
-        width: 60px;
+        width: 48px;
         height: 24px;
-        background-color: #ccc;
-        border-radius: 12px;
+        background-color: var(--ui-border-strong);
+        border-radius: var(--ui-radius-pill);
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: background-color var(--ui-transition);
         border: none;
         outline: none;
-        margin-right: 5px;
+        margin-right: 6px;
         vertical-align: middle;
     }
 
     .toggle-switch.active {
-        background-color: #f44336;
+        background-color: var(--ui-accent);
     }
 
     .toggle-switch::before {
         content: '';
         position: absolute;
-        top: 2px;
-        left: 2px;
-        width: 20px;
-        height: 20px;
-        background-color: white;
+        top: 3px;
+        left: 3px;
+        width: 18px;
+        height: 18px;
+        background-color: #ffffff;
         border-radius: 50%;
-        transition: transform 0.3s;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        transition: transform var(--ui-transition);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.22);
     }
 
     .toggle-switch.active::before {
-        transform: translateX(36px);
+        transform: translateX(24px);
     }
 
     .toggle-switch:hover {
-        opacity: 0.8;
+        opacity: 0.9;
     }
 
     /* Dark mode form controls */
     body.dark-mode .dashboard-select {
-        background-color: #444;
-        color: #e0e0e0;
-        border-color: #666;
+        background-color: var(--ui-surface-subtle);
+        color: var(--ui-text);
+        border-color: var(--ui-border-strong);
     }
 
     body.dark-mode .dashboard-select:focus {
-        border-color: #4CAF50;
+        border-color: var(--ui-accent);
     }
 
     /* Dark mode toggle switch styles */
     body.dark-mode .toggle-switch {
-        background-color: #555 !important;
+        background-color: #475569;
     }
 
     body.dark-mode .toggle-switch.active {
-        background-color: #f44336 !important;
+        background-color: var(--ui-accent);
     }
 
     body.dark-mode .toggle-switch::before {
-        background-color: #e0e0e0;
+        background-color: #f8fafc;
     }
 
     .menu-bar {
-        background-color: #ffffff;
-        overflow-x: auto; /* Enable horizontal scrolling */
-        white-space: nowrap; /* Prevent menu items from wrapping */
+        background-color: var(--ui-glass);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        overflow-x: auto;
+        white-space: nowrap;
         display: flex;
         align-items: center;
-        border-bottom: 1px solid #ddd;
-        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-        scrollbar-width: thin; /* Firefox */
-        scrollbar-color: #4CAF50 #f0f0f0; /* Firefox */
-        position: fixed; /* Change from sticky to fixed */
-        top: 0; /* Stick to the top */
-        left: 0; /* Ensure it starts from the left edge */
-        right: 0; /* Ensure it extends to the right edge */
-        width: 100%; /* Make sure it spans the full width */
-        z-index: 1000; /* Ensure it's above other content */
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add subtle shadow for visual separation */
-    }
-
-    /* Add padding to body to prevent content from hiding under fixed header */
-    body {
-        padding-top: 65px; /* Increased padding to account for the fixed menu height */
+        gap: 4px;
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--ui-border);
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        scrollbar-color: var(--ui-border-strong) transparent;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 1000;
+        box-shadow: var(--ui-shadow-sm);
     }
 
     .battery-wrapper {
@@ -8939,137 +9682,130 @@ def get_menu_html(calculating, default_page, arg_errors, THIS_VERSION, battery_s
         """
 <style>
 .menu-bar {
-background-color: #ffffff;
-overflow-x: auto; /* Enable horizontal scrolling */
-white-space: nowrap; /* Prevent menu items from wrapping */
+background-color: var(--ui-glass);
+backdrop-filter: blur(12px);
+-webkit-backdrop-filter: blur(12px);
+overflow-x: auto;
+white-space: nowrap;
 display: flex;
 align-items: center;
-border-bottom: 1px solid #ddd;
--webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-scrollbar-width: thin; /* Firefox */
-scrollbar-color: #4CAF50 #f0f0f0; /* Firefox */
-position: fixed; /* Change from sticky to fixed */
-top: 0; /* Stick to the top */
-left: 0; /* Ensure it starts from the left edge */
-right: 0; /* Ensure it extends to the right edge */
-width: 100%; /* Make sure it spans the full width */
-z-index: 1000; /* Ensure it's above other content */
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add subtle shadow for visual separation */
-}
-
-/* Add padding to body to prevent content from hiding under fixed header */
-body {
-padding-top: 65px; /* Increased padding to account for the fixed menu height */
+gap: 4px;
+padding: 8px 16px;
+border-bottom: 1px solid var(--ui-border);
+-webkit-overflow-scrolling: touch;
+scrollbar-width: thin;
+scrollbar-color: var(--ui-border-strong) transparent;
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+width: 100%;
+z-index: 1000;
+box-shadow: var(--ui-shadow-sm);
 }
 
 .menu-bar .logo {
 display: flex;
 align-items: center;
-padding: 0 16px;
-min-width: fit-content; /* Prevent logo from shrinking */
+padding: 0 12px 0 4px;
+min-width: fit-content;
 }
 
 .menu-bar .logo img {
-height: 40px;
-margin-right: 10px;
+height: 32px;
+margin-right: 8px;
 }
 
 .menu-bar .logo-text {
-font-size: 24px;
-font-weight: bold;
-color: #333;
+font-size: 18px;
+font-weight: 700;
+letter-spacing: -0.02em;
+color: var(--ui-text);
 white-space: nowrap;
 }
 
 .menu-bar a {
-color: #333;
+color: var(--ui-text-secondary);
 text-align: center;
-padding: 14px 16px;
+padding: 8px 14px;
 text-decoration: none;
-font-size: 16px;
+font-size: 14px;
+font-weight: 500;
+border-radius: var(--ui-radius-pill);
 display: flex;
 align-items: center;
 white-space: nowrap;
-flex-shrink: 0; /* Prevent items from shrinking */
+flex-shrink: 0;
+transition: background-color var(--ui-transition), color var(--ui-transition);
 }
 
-
-
 .menu-bar a:hover {
-background-color: #f0f0f0;
-color: #4CAF50;
+background-color: var(--ui-surface-subtle);
+color: var(--ui-accent-hover);
 }
 
 .menu-bar a.active {
-background-color: #4CAF50;
-color: white;
+background-color: var(--ui-accent);
+color: #ffffff;
+box-shadow: 0 2px 8px rgba(16, 185, 129, 0.28);
 }
 
 .dark-mode-toggle {
 margin-left: auto;
-padding: 14px 16px;
-flex-shrink: 0; /* Prevent from shrinking */
+padding: 0 4px 0 12px;
+flex-shrink: 0;
 }
 
 .dark-mode-toggle button {
-background-color: #f0f0f0;
-color: #333;
-border: 1px solid #ddd;
-padding: 8px 12px;
-border-radius: 4px;
+background-color: var(--ui-surface-subtle);
+color: var(--ui-text-secondary);
+border: 1px solid var(--ui-border);
+padding: 7px 14px;
+border-radius: var(--ui-radius-pill);
+font-size: 13px;
+font-weight: 500;
 cursor: pointer;
 white-space: nowrap;
+transition: all var(--ui-transition);
 }
 
 .dark-mode-toggle button:hover {
-background-color: #e0e0e0;
-}
-
-/* Dark mode menu styles */
-body.dark-mode .menu-bar {
-background-color: #1e1e1e;
-border-bottom: 1px solid #333;
-scrollbar-color: #4CAF50 #333; /* Firefox */
-}
-
-body.dark-mode .menu-bar::-webkit-scrollbar-track {
-background: #333;
+background-color: var(--ui-surface-hover);
+color: var(--ui-text);
 }
 
 body.dark-mode .menu-bar .logo-text {
-color: white;
+color: var(--ui-text);
 }
 
 body.dark-mode .menu-bar a {
-color: white;
+color: var(--ui-text-secondary);
 }
 
 body.dark-mode .menu-bar a:hover {
-background-color: #2c652f;
-color: white;
+background-color: var(--ui-surface-hover);
+color: var(--ui-accent-text);
 }
 
 body.dark-mode .menu-bar a.active {
-background-color: #4CAF50;
-color: white;
+background-color: var(--ui-accent);
+color: #ffffff;
 }
 
-body.dark-mode .calculating-icon {
-color: #6CFF72 !important;
-}
-
+body.dark-mode .calculating-icon,
 body.dark-mode .idle-icon {
-color: #6CFF72 !important;
+color: var(--ui-accent-text) !important;
 }
 
 body.dark-mode .dark-mode-toggle button {
-background-color: #444;
-color: #e0e0e0;
-border-color: #555;
+background-color: var(--ui-surface);
+color: var(--ui-text-secondary);
+border-color: var(--ui-border);
 }
 
 body.dark-mode .dark-mode-toggle button:hover {
-background-color: #666;
+background-color: var(--ui-surface-hover);
+color: var(--ui-text);
 }
 
 /* Advanced sub-menu. The popup is a sibling of the menu bar, not a child, and is position: fixed and
@@ -9083,32 +9819,38 @@ flex-shrink: 0;
 .menu-dropdown-toggle {
 background: none;
 border: none;
-color: #333;
-padding: 14px 16px;
-font-size: 16px;
+color: var(--ui-text-secondary);
+padding: 8px 14px;
+font-size: 14px;
+font-weight: 500;
 font-family: inherit;
+border-radius: var(--ui-radius-pill);
 cursor: pointer;
 white-space: nowrap;
+transition: background-color var(--ui-transition), color var(--ui-transition);
 }
 
 .menu-dropdown-toggle:hover {
-background-color: #f0f0f0;
-color: #4CAF50;
+background-color: var(--ui-surface-subtle);
+color: var(--ui-accent-hover);
 }
 
 .menu-dropdown-toggle.active {
-background-color: #4CAF50;
-color: white;
+background-color: var(--ui-accent);
+color: #ffffff;
 }
 
 .menu-dropdown-content {
 display: none;
 position: fixed;
 flex-direction: column;
-min-width: 180px;
-background-color: #ffffff;
-border: 1px solid #ddd;
-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+min-width: 190px;
+padding: 6px;
+gap: 2px;
+background-color: var(--ui-surface);
+border: 1px solid var(--ui-border);
+border-radius: var(--ui-radius-md);
+box-shadow: var(--ui-shadow-lg);
 z-index: 1001;
 }
 
@@ -9117,58 +9859,60 @@ display: flex;
 }
 
 .menu-dropdown-content a {
-color: #333;
-padding: 14px 16px;
+color: var(--ui-text-secondary);
+padding: 9px 12px;
 text-decoration: none;
-font-size: 16px;
+font-size: 14px;
+font-weight: 500;
+border-radius: var(--ui-radius-sm);
 display: flex;
 align-items: center;
 white-space: nowrap;
+transition: background-color var(--ui-transition), color var(--ui-transition);
 }
 
 .menu-dropdown-content a:hover {
-background-color: #f0f0f0;
-color: #4CAF50;
+background-color: var(--ui-surface-subtle);
+color: var(--ui-accent-hover);
 }
 
 .menu-dropdown-content a.active {
-background-color: #4CAF50;
-color: white;
+background-color: var(--ui-accent-soft);
+color: var(--ui-accent-text);
 }
 
 body.dark-mode .menu-dropdown-content a {
-color: white;
+color: var(--ui-text-secondary);
 }
 
 body.dark-mode .menu-dropdown-content a:hover {
-background-color: #2c652f;
-color: white;
+background-color: var(--ui-surface-hover);
+color: var(--ui-accent-text);
 }
 
 body.dark-mode .menu-dropdown-content a.active {
-background-color: #4CAF50;
-color: white;
+background-color: var(--ui-accent-soft);
+color: var(--ui-accent-text);
 }
 
-/* !important because the shared dark-mode rule paints every button red with !important */
 body.dark-mode .menu-dropdown-toggle {
-background-color: transparent !important;
-color: white !important;
+background-color: transparent;
+color: var(--ui-text-secondary);
 }
 
 body.dark-mode .menu-dropdown-toggle:hover {
-background-color: #2c652f !important;
-color: white !important;
+background-color: var(--ui-surface-hover);
+color: var(--ui-accent-text);
 }
 
 body.dark-mode .menu-dropdown-toggle.active {
-background-color: #4CAF50 !important;
-color: white !important;
+background-color: var(--ui-accent);
+color: #ffffff;
 }
 
 body.dark-mode .menu-dropdown-content {
-background-color: #1e1e1e;
-border-color: #333;
+background-color: var(--ui-surface);
+border-color: var(--ui-border);
 }
 </style>
 

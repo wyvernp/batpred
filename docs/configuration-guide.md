@@ -127,3 +127,12 @@ If you are using expert mode then these options may be worth reviewing, otherwis
 | input_number.predbat_best_soc_min | 0 | Don't use non-zero otherwise all slots will be force charging |
 
 You should set **select.predbat_mode** to 'Control charge & discharge'
+
+### Negative import prices
+
+When `select.predbat_mode` is set to **Control Charge & Discharge** (and `input_number.predbat_rate_low_threshold` is `0`, the automatic default):
+
+- Negative import-price slots are always included as charging candidates.
+- Ahead of consecutive negative import-price slots, Predbat uses its consumption and solar forecasts to check whether natural headroom will already absorb full charging through the window.
+- If the battery would otherwise fill early (or start too full), Predbat evaluates pre-discharging before the negative window — including at zero or negative export rates — coupled with recharging during the negative window. It accounts for export tariffs, conversion losses, battery cycling costs (`input_number.predbat_metric_battery_cycle`), and future demand, and never forces discharge unless doing so strictly improves the overall predicted financial outcome.
+- If you want the forecast model to cap predicted grid-powered battery charging against a site import margin (for example on a 100 A supply), you can optionally set [grid_import_limit](apps-yaml.md#grid_import_limit) in `apps.yaml`. This is a forecast modelling assumption only and does not provide hardware fuse protection.

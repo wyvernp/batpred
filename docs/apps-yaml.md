@@ -1486,7 +1486,7 @@ The iboost energy sensor should reset to zero each day so if your source sensor 
 
 ## Inverter control configurations
 
-NB: literal numeric values for the power-limit settings below (`inverter_limit`, `pv_ac_limit`, `export_limit`, `inverter_limit_charge`, `inverter_limit_discharge`, `inverter_limit_export`, `inverter_limit_charge_dc`, `battery_rate_max`, `inverter_battery_rate_min`) must always be in **watts** — e.g. `7300` for a 7.3 kW inverter, never `7.3`. Predbat's unit auto-conversion only fires when the value is a sensor reference (it reads `unit_of_measurement` from the HA entity); for literal values there is no entity to read, so the raw number is taken as watts. A literal `inverter_limit: 7.3` will be interpreted as 7.3 W and clamp `battery_draw` to ~0.0006 kWh per 5-min step, producing a plan that looks like Predbat refuses to discharge the battery.
+NB: literal numeric values for the power-limit settings below (`inverter_limit`, `pv_ac_limit`, `grid_import_limit`, `export_limit`, `inverter_limit_charge`, `inverter_limit_discharge`, `inverter_limit_export`, `inverter_limit_charge_dc`, `battery_rate_max`, `inverter_battery_rate_min`) must always be in **watts** — e.g. `7300` for a 7.3 kW inverter, never `7.3`. Predbat's unit auto-conversion only fires when the value is a sensor reference (it reads `unit_of_measurement` from the HA entity); for literal values there is no entity to read, so the raw number is taken as watts. A literal `inverter_limit: 7.3` will be interpreted as 7.3 W and clamp `battery_draw` to ~0.0006 kWh per 5-min step, producing a plan that looks like Predbat refuses to discharge the battery.
 
 ### **inverter_limit**
 
@@ -1535,6 +1535,25 @@ Example:
 ```
 
 NB: pv_ac_limit is ONLY used by Predbat to improve the quality of the plan, any solar clipping is done by the inverter and is not controlled by Predbat.
+
+### **grid_import_limit**
+
+Optional (default `0`, disabled).
+
+Forecast-only site grid import cap in **watts** (for example `19550` for an 85 A margin at 230 V).
+
+When set to a positive value, Predbat models throttling of grid-powered battery charging whenever total
+predicted site import (household load, EV charging, iBoost and battery charging) would exceed this cap.
+DC PV charging and household/EV loads are never reduced or removed from the forecast.
+
+**Important:** `grid_import_limit` is a forecast modelling assumption only. It does **not** enforce hardware
+fuse protection or limit real-time inverter/site current.
+
+Example:
+
+```yaml
+  grid_import_limit: 19550
+```
 
 ### **export_limit**
 
