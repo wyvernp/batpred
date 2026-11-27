@@ -475,6 +475,7 @@ Values of between -1p and 0p would be recommended.
 
 **input_number.predbat_rate_low_threshold** (_expert mode_) When set to 0 (the default) Predbat will automatically look at the future import rates in the plan
 and determine the import rate threshold below which a slot will be considered to be a potential charging slot.<BR>
+In automatic mode negative import rates are always included as candidates; the optimiser still decides whether charging is worthwhile.
 If rate_low_threshold is set to a non-zero value this will set the threshold below future average import rates as the minimum to consider for a charge window,
 e.g. setting to 0.8 = 80% of the average rate.<BR>
 If you set this too low you might not get enough charge slots. If it's too high you might get too many in the
@@ -485,6 +486,12 @@ and determine the threshold above which a slot can be considered a potential exp
 If rate_high_threshold is set to a non-zero value this will set the threshold above future average export rates as the minimum export rate to consider exporting for,
 e.g. setting to 1.2 = 20% above average rate.<BR>
 If you set this too high you might not get any export slots. If it's too low you might get too many in the 24-hour period.
+
+Ahead of consecutive negative import-price slots (when export control is enabled and not restricted to freeze-only),
+Predbat also evaluates pre-discharge slots — including zero or negative export rates — coupled with recharging during
+the negative-price window. Pre-discharge is only scheduled when natural headroom from forecast load and solar is not
+already sufficient and the combined discharge-and-recharge strictly improves the predicted financial outcome after
+export tariffs, conversion losses, battery cycling costs, and export improvement thresholds.
 
 Both thresholds, automatic or set by you, ignore an event price that is above the tariff's own rate (an Octopus saving session
 or Axle event reward): those slots count at the tariff's own rate when the thresholds are worked out, so the event does not

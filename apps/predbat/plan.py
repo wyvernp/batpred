@@ -5549,6 +5549,309 @@ class Plan:
         self.plan_write_debug(debug_mode, "plan_levels.html", self.pv_forecast_minute_step, self.pv_forecast_minute10_step, self.load_minutes_step, self.load_minutes_step10, self.end_record)
         return best_price_charge, best_price_export, best_price_charge_level, best_price_export_level, best_metric, best_cost, best_keep, best_soc_min, best_cycle, best_carbon, best_import, best_battery_value
 
+    def find_negative_import_runs(self, end_record):
+        """Return maximal contiguous [start, end) runs where rate_import < 0 within the forecast horizon."""
+        runs = []
+        horizon_end = self.minutes_now + end_record
+        run_start = None
+        minute = self.minutes_now
+        while minute < horizon_end:
+            rate = self.rate_import.get(minute, 0.0)
+            if rate < 0.0:
+                if run_start is None:
+                    run_start = minute
+            elif run_start is not None:
+                runs.append((run_start, minute))
+                run_start = None
+            minute += PREDICT_STEP
+        if run_start is not None:
+            runs.append((run_start, horizon_end))
+        return runs
+
+    @staticmethod
+    def _merge_pre_discharge_slots(export_window, export_limits, chosen_slots):
+        """Merge chosen active pre-discharge slots into (export_window, export_limits), splitting idle overlaps."""
+        merged = []
+        for idx, window in enumerate(export_window):
+            limit = export_limits[idx]
+            if export_mode_of(limit) != EXPORT_MODE_IDLE:
+                merged.append((dict(window), limit))
+                continue
+            pieces = [(window["start"], window["end"])]
+            for s_start, s_end, _, _ in chosen_slots:
+                next_pieces = []
+                for p_start, p_end in pieces:
+                    if s_end <= p_start or s_start >= p_end:
+                        next_pieces.append((p_start, p_end))
+                    else:
+                        if p_start < s_start:
+                            next_pieces.append((p_start, s_start))
+                        if s_end < p_end:
+                            next_pieces.append((s_end, p_end))
+                pieces = next_pieces
+            for p_start, p_end in pieces:
+                if p_end > p_start:
+                    piece = dict(window)
+                    piece["start"] = p_start
+                    piece["end"] = p_end
+                    piece["start_orig"] = p_start
+                    merged.append((piece, limit))
+        for s_start, s_end, s_avg, s_limit in chosen_slots:
+            merged.append(({"start": s_start, "end": s_end, "start_orig": s_start, "average": s_avg}, s_limit))
+        merged.sort(key=lambda item: item[0]["start"])
+        return [item[0] for item in merged], [item[1] for item in merged]
+
+    def _evaluate_headroom_batch(self, candidates, end_record):
+        """Run a batch of (charge_limit, export_window, export_limits) candidates through the prediction engine."""
+        run_pv90 = self.pv_metric90_weight > 0
+        handles = []
+        for cand_charge_limit, cand_export_window, cand_export_limits in candidates:
+            h_nom = self.launch_run_prediction_single(cand_charge_limit, self.charge_window_best, cand_export_window, cand_export_limits, PV_SCENARIO_NOMINAL, end_record)
+            h_pv10 = self.launch_run_prediction_single(cand_charge_limit, self.charge_window_best, cand_export_window, cand_export_limits, PV_SCENARIO_PV10, end_record)
+            h_pv90 = self.launch_run_prediction_single(cand_charge_limit, self.charge_window_best, cand_export_window, cand_export_limits, PV_SCENARIO_PV90, end_record) if run_pv90 else None
+            handles.append((h_nom, h_pv10, h_pv90))
+
+        evaluated = []
+        for h_nom, h_pv10, h_pv90 in handles:
+            cost, import_kwh_battery, import_kwh_house, export_kwh, _, soc, _, battery_cycle, metric_keep, final_iboost, final_carbon_g = h_nom.get()
+            cost10, _, _, _, _, soc10, _, _, _, final_iboost10, _ = h_pv10.get()
+            soc90 = None
+            cost90 = None
+            final_iboost90 = 0.0
+            if h_pv90 is not None:
+                cost90, _, _, _, _, soc90, _, _, _, final_iboost90, _ = h_pv90.get()
+            metric, _ = self.compute_metric(
+                end_record,
+                soc,
+                soc10,
+                cost,
+                cost10,
+                final_iboost,
+                final_iboost10,
+                battery_cycle,
+                metric_keep,
+                final_carbon_g,
+                import_kwh_battery,
+                import_kwh_house,
+                export_kwh,
+                soc90=soc90,
+                cost90=cost90,
+                final_iboost90=final_iboost90,
+            )
+            gate = self.export_gate_metric(end_record, cost, soc, final_iboost, battery_cycle, final_carbon_g, import_kwh_battery, import_kwh_house, export_kwh)
+            evaluated.append((metric, gate, cost, metric_keep, battery_cycle, final_carbon_g, import_kwh_battery + import_kwh_house))
+        return evaluated
+
+    def optimise_negative_import_headroom(self, best_metric, best_cost, best_keep, best_cycle, best_carbon, best_import, debug_mode=False):
+        """
+        Coupled pre-discharge and negative-import recharge pass.
+
+        When consecutive negative-import slots exist and the incumbent plan hits soc_max before the
+        negative window ends (or leaves negative charge windows under-utilised), tests discharging
+        before the negative run — including at zero or negative export tariffs — coupled with
+        charging during the negative window. Only commits when both the whole-horizon plan metric
+        and the nominal financial gate strictly improve.
+        """
+        if not (
+            self.calculate_best_charge
+            and self.calculate_best_export
+            and self.set_export_window
+            and not self.set_export_freeze_only
+            and not self.set_charge_freeze_only
+            and self.rate_import
+            and self.charge_window_best
+            and self.soc_max > self.best_soc_min
+            and self.battery_rate_max_discharge > 0
+            and self.battery_rate_max_charge > 0
+            and self.end_record > 0
+        ):
+            return best_metric, best_cost, best_keep, best_cycle, best_carbon, best_import
+
+        neg_runs = self.find_negative_import_runs(self.end_record)
+        if not neg_runs:
+            return best_metric, best_cost, best_keep, best_cycle, best_carbon, best_import
+
+        curr = self.currency_symbols[1]
+        slot_len = max(int(self.plan_interval_minutes), PREDICT_STEP)
+        manual_all = set(self.manual_all_times)
+        manual_block_charge = set(self.manual_demand_times) | set(self.manual_export_times) | set(self.manual_freeze_export_times) | set(self.manual_freeze_charge_times)
+        min_soc_pct = calc_percent_limit(self.best_soc_min, self.soc_max)
+        full_target = pack_export_limit(EXPORT_MODE_TARGET, min_soc_pct, FULL_EXPORT_POWER)
+        discharge_rate_per_min = max(self.battery_rate_max_discharge * self.battery_rate_max_scaling_discharge, 1e-6)
+        prev_neg_end = self.minutes_now
+
+        for neg_start, neg_end in neg_runs:
+            search_start = max(self.minutes_now, prev_neg_end)
+            prev_neg_end = neg_end
+            if neg_start <= search_start:
+                continue
+
+            # Find negative-rate charge windows covering this run
+            neg_charge_indices = []
+            for c_idx, c_win in enumerate(self.charge_window_best):
+                if c_win["start"] < neg_end and c_win["end"] > neg_start and c_win["average"] < 0 and c_win["start"] not in manual_block_charge:
+                    neg_charge_indices.append(c_idx)
+            if not neg_charge_indices:
+                continue
+
+            # Simulate incumbent plan to inspect natural headroom from load/solar forecasts
+            self.run_prediction(
+                self.charge_limit_best,
+                self.charge_window_best,
+                self.export_window_best,
+                self.export_limits_best,
+                False,
+                end_record=self.end_record,
+            )
+            peak_soc_in_neg = 0.0
+            for minute in range(neg_start, neg_end + PREDICT_STEP, PREDICT_STEP):
+                rel = minute - self.minutes_now
+                if rel in self.predict_soc:
+                    peak_soc_in_neg = max(peak_soc_in_neg, self.predict_soc[rel])
+            all_neg_full = all(self.charge_limit_best[c_idx] >= (self.soc_max - 0.05) for c_idx in neg_charge_indices)
+            if all_neg_full and peak_soc_in_neg < (self.soc_max - 0.05):
+                # Natural headroom is already sufficient to absorb full charging throughout the negative run
+                continue
+
+            # Collect eligible pre-discharge slots in [search_start, neg_start)
+            candidate_slots = []
+            cursor = neg_start
+            while cursor > search_start:
+                s_start = max(search_start, cursor - slot_len)
+                s_end = cursor
+                cursor = s_start
+                if (s_end - s_start) < PREDICT_STEP:
+                    continue
+                if any(m in manual_all or self.rate_import.get(m, 0.0) < 0.0 for m in range(s_start, s_end, PREDICT_STEP)):
+                    continue
+                # Never overlap an active charge window or an already-active export window
+                overlaps_active = False
+                for c_idx, c_win in enumerate(self.charge_window_best):
+                    if self.charge_limit_best[c_idx] > 0.0 and c_win["start"] < s_end and c_win["end"] > s_start:
+                        overlaps_active = True
+                        break
+                if overlaps_active:
+                    continue
+                for e_idx, e_win in enumerate(self.export_window_best):
+                    if export_mode_of(self.export_limits_best[e_idx]) != EXPORT_MODE_IDLE and e_win["start"] < s_end and e_win["end"] > s_start:
+                        overlaps_active = True
+                        break
+                if overlaps_active:
+                    continue
+                if not self.car_charging_from_battery and self.hit_uncancellable_car_window(s_start, s_end):
+                    continue
+                if not self.iboost_on_export and self.iboost_enable and self.iboost_plan and self.hit_charge_window(self.iboost_plan, s_start, s_end) >= 0:
+                    continue
+                steps = max((s_end - s_start) // PREDICT_STEP, 1)
+                avg_export = dp2(sum(self.rate_export.get(m, 0.0) for m in range(s_start, s_end, PREDICT_STEP)) / steps)
+                candidate_slots.append((s_start, s_end, avg_export))
+
+            if not candidate_slots:
+                continue
+
+            # Prefer highest export rate first, and closest to neg_start among equal export rates
+            candidate_slots.sort(key=lambda item: (item[2], item[0]), reverse=True)
+            max_needed_minutes = (self.soc_max - self.best_soc_min) / discharge_rate_per_min
+            max_slots = min(len(candidate_slots), max(int(ceil(max_needed_minutes / float(slot_len))) + 1, 2), 12)
+            ranked_slots = candidate_slots[:max_slots]
+
+            # Baseline evaluation + coupled Stage 1 (0..max_slots) in one batch
+            coupled_charge_limit = self.charge_limit_best.copy()
+            for c_idx in neg_charge_indices:
+                coupled_charge_limit[c_idx] = self.soc_max
+
+            stage1_plans = [(self.charge_limit_best, self.export_window_best, self.export_limits_best)]
+            stage1_meta = [(0, [])]  # (k, chosen_slots_with_limits)
+            if coupled_charge_limit != self.charge_limit_best:
+                stage1_plans.append((coupled_charge_limit, self.export_window_best, self.export_limits_best))
+                stage1_meta.append((0, []))
+            for k in range(1, len(ranked_slots) + 1):
+                chosen = [(s_start, s_end, s_avg, full_target) for s_start, s_end, s_avg in ranked_slots[:k]]
+                cand_ew, cand_el = self._merge_pre_discharge_slots(self.export_window_best, self.export_limits_best, chosen)
+                stage1_plans.append((coupled_charge_limit, cand_ew, cand_el))
+                stage1_meta.append((k, chosen))
+
+            stage1_eval = self._evaluate_headroom_batch(stage1_plans, self.end_record)
+            base_metric, base_gate, base_cost, base_keep, base_cycle, base_carbon, base_import = stage1_eval[0]
+
+            best_choice = None
+            best_score = base_metric
+
+            def _consider(plan_tuple, chosen_slots, eval_tuple, k_val):
+                """Check strict financial-improvement gates and update best_choice."""
+                nonlocal best_choice, best_score
+                metric, gate, cost, keep, cycle, carbon, imp = eval_tuple
+                gate_share = sum(self.export_gate_share(s_limit, s_start, s_end) for s_start, s_end, _, s_limit in chosen_slots)
+                penalty = sum(self.export_threshold_penalty(s_limit, s_start, s_end) for s_start, s_end, _, s_limit in chosen_slots)
+                score = metric + penalty
+                min_gain = max(gate_share, 0.001) if chosen_slots else 0.001
+                if (metric + 0.001 <= base_metric) and (score <= base_metric) and ((gate + min_gain) <= base_gate):
+                    if best_choice is None or score < best_score - 1e-6 or (abs(score - best_score) <= 1e-6 and metric < best_choice[2][0]):
+                        best_score = score
+                        best_choice = (plan_tuple, chosen_slots, eval_tuple, k_val)
+
+            for idx in range(1, len(stage1_plans)):
+                _consider(stage1_plans[idx], stage1_meta[idx][1], stage1_eval[idx], stage1_meta[idx][0])
+
+            # Stage 2: refine marginal slot start time (5-min resolution) and low-power levels
+            refine_indices = []
+            if best_choice is not None:
+                win_k = best_choice[3]
+                if win_k >= 1:
+                    refine_indices.append(win_k)
+                if win_k < len(ranked_slots):
+                    refine_indices.append(win_k + 1)
+            else:
+                # Even if a full slot over-discharged, a shorter partial slot may still be profitable
+                refine_indices.append(1)
+
+            stage2_plans = []
+            stage2_meta = []
+            power_levels = [FULL_EXPORT_POWER] + (list(LOW_EXPORT_POWER_LEVELS) if self.set_export_low_power else [])
+            for k in refine_indices:
+                fixed = [(s_start, s_end, s_avg, full_target) for s_start, s_end, s_avg in ranked_slots[: k - 1]]
+                m_start, m_end, m_avg = ranked_slots[k - 1]
+                for power in power_levels:
+                    lim = pack_export_limit(EXPORT_MODE_TARGET, min_soc_pct, power)
+                    for try_start in range(m_start, m_end, PREDICT_STEP):
+                        if try_start == m_start and power == FULL_EXPORT_POWER:
+                            continue  # Already evaluated in Stage 1
+                        if power < FULL_EXPORT_POWER and (m_end - try_start) < 15:
+                            continue
+                        chosen = fixed + [(try_start, m_end, m_avg, lim)]
+                        cand_ew, cand_el = self._merge_pre_discharge_slots(self.export_window_best, self.export_limits_best, chosen)
+                        stage2_plans.append((coupled_charge_limit, cand_ew, cand_el))
+                        stage2_meta.append((k, chosen))
+
+            if stage2_plans:
+                stage2_eval = self._evaluate_headroom_batch(stage2_plans, self.end_record)
+                for idx in range(len(stage2_plans)):
+                    _consider(stage2_plans[idx], stage2_meta[idx][1], stage2_eval[idx], stage2_meta[idx][0])
+
+            if best_choice is not None:
+                (win_cl, win_ew, win_el), win_slots, (win_metric, _, win_cost, win_keep, win_cycle, win_carbon, win_import), _ = best_choice
+                self.charge_limit_best = win_cl
+                self.export_window_best = win_ew
+                self.export_limits_best = win_el
+                best_metric, best_cost, best_keep, best_cycle, best_carbon, best_import = win_metric, win_cost, win_keep, win_cycle, win_carbon, win_import
+                self.log(
+                    "Negative import headroom optimisation for {}-{} added {} pre-discharge slot(s): metric {}{} -> {}{}, cost {}{} -> {}{}".format(
+                        self.time_abs_str(neg_start),
+                        self.time_abs_str(neg_end),
+                        len(win_slots),
+                        dp2(base_metric),
+                        curr,
+                        dp2(win_metric),
+                        curr,
+                        dp2(base_cost),
+                        curr,
+                        dp2(win_cost),
+                        curr,
+                    )
+                )
+
+        return best_metric, best_cost, best_keep, best_cycle, best_carbon, best_import
+
     def optimise_all_windows(self, best_metric, metric_keep, debug_mode=False):
         """
         Optimise all windows, both charge and export in rate order
@@ -5590,6 +5893,10 @@ class Plan:
         # Re-optimise each window of the settled plan. calculate_second_pass lifts the window budget so
         # every window in the record is revisited rather than just the near-term ones (slower).
         best_metric, best_cost, best_keep, best_cycle, best_carbon, best_import = self.optimise_plan_pass(self.end_record, budget=0 if self.calculate_second_pass else PLAN_PASS_WINDOW_BUDGET, debug_mode=debug_mode)
+
+        # Coupled pre-discharge headroom pass before consecutive negative import-price runs
+        best_metric, best_cost, best_keep, best_cycle, best_carbon, best_import = self.optimise_negative_import_headroom(best_metric, best_cost, best_keep, best_cycle, best_carbon, best_import, debug_mode=debug_mode)
+        record_export_windows = max(self.max_charge_windows(self.end_record + self.minutes_now, self.export_window_best), 1)
 
         # Export more solar - enable freeze export on idle solar windows if it doesn't cost too much
         if self.export_more_solar:

@@ -69,6 +69,7 @@ Once you get everything working please share the configuration as a GitHub issue
    | [Tesla Powerwall via Teslemetry component (beta)](#teslemetry-component-beta) | Predbat built-in | [teslemetry.yaml](https://raw.githubusercontent.com/springfall2008/batpred/main/templates/teslemetry.yaml) |
    | [Tesla Powerwall via Teslemetry local control](#teslemetry-local-control) | [Teslemetry](https://www.home-assistant.io/integrations/teslemetry) paired with the local Powerwall gateway | [teslemetry_local.yaml](https://raw.githubusercontent.com/springfall2008/batpred/main/templates/teslemetry_local.yaml) |
    | [Victron](#victron) | [Victron GX](https://www.home-assistant.io/integrations/victron_gx/) | [victron.yaml](https://raw.githubusercontent.com/springfall2008/batpred/main/templates/victron.yaml) |
+   | [Victron direct local MQTT](#victron-route-d-direct-local-mqtt) | Venus OS local MQTT (dbus-flashmq) | [victron_mqtt.yaml](https://raw.githubusercontent.com/springfall2008/batpred/main/templates/victron_mqtt.yaml) |
 
 Note that support for all these inverters is in various stages of development. Please expect things to fail and report them as Issues on GitHub.
 
@@ -3530,18 +3531,19 @@ rest_command:
 
 ## Victron
 
-There is no Victron inverter type in Predbat yet. A Victron MultiPlus-II or Quattro with a Cerbo GX (Venus OS) running the ESS assistant can still be controlled, using Home Assistant to translate what Predbat wants into Cerbo settings.
+Predbat includes an experimental `VICTRON_GX_MQTT` inverter type for a Victron MultiPlus or Quattro with a Cerbo GX (Venus OS) running ESS. The existing Home Assistant routes below remain supported.
 Background and the discussion behind this section: [#798](https://github.com/springfall2008/batpred/discussions/798) and [#2846](https://github.com/springfall2008/batpred/issues/2846).
 
-Three working routes have been described by users. Pick one:
+Four routes are available. Pick one:
 
 | Route | What Predbat drives | Predbat sees | Suits |
 | ----- | ------------------- | ------------ | ----- |
 | [A. Target SoC](#victron-route-a-target-soc) (template [victron.yaml](https://raw.githubusercontent.com/springfall2008/batpred/main/templates/victron.yaml)) | ESS minimum SoC and max charge current, via two helpers | SK base type, target SoC in %, charge rate in A | the simplest set-up; no forced battery export |
 | [B. Grid setpoint and ESS limits](#victron-route-b-grid-setpoint-and-ess-limits) | AC power setpoint, ESS max charge and inverter power | a custom type with charge/discharge services | full charge, discharge and freeze modes |
 | [C. Follow predbat.status](#victron-route-c-follow-predbatstatus) | AC setpoint, max charge current, max inverter power | its own status, mirrored by Node-RED | those who prefer Node-RED flows |
+| [D. Direct local MQTT](#victron-route-d-direct-local-mqtt) (template [victron_mqtt.yaml](https://raw.githubusercontent.com/springfall2008/batpred/main/templates/victron_mqtt.yaml)) | volatile Mode 2 grid setpoint, DVCC charge-current cap, maximum inverter power | local dbus-flashmq notifications | users who can run an independent external watchdog |
 
-The idea behind freeze export is the same in all three: **block battery charging and leave everything else open.** The battery then covers the house load, while solar surplus goes to the grid instead of into the battery. Routes A and C do this with the ESS max charge current, route B with the ESS max charge power limit (see the note under route A on why the current may be the safer choice).
+The idea behind freeze export is the same in all routes: **block battery charging and leave everything else open.** The battery then covers the house load, while solar surplus goes to the grid instead of into the battery. Routes A, C and D do this with the ESS/DVCC max charge current (route D also clears the volatile setpoint override); route B uses the ESS max charge power limit (see the note under route A on why the current may be the safer choice).
 
 Route A is the one the template implements, and is described in full below. Routes B and C were contributed in [#2846](https://github.com/springfall2008/batpred/issues/2846) by their users and are summarised from there.
 
@@ -3852,6 +3854,55 @@ Described by @WesSec in [#2846](https://github.com/springfall2008/batpred/issues
 | Demand / anything else | e.g. 50 W | charge limit | discharge limit |
 
 Charging is not stopped at a target SoC; Predbat's next calculation changes the status instead. This route allows for more extensive integration, for instance lowering the charge and discharge limits on battery temperature and passing them to Predbat through the [manual API](manual-api.md), so the plan matches the real limits.
+
+### Victron route D: direct local MQTT
+
+This route is an alternative to the existing HA-helper route in [victron.yaml](https://raw.githubusercontent.com/springfall2008/batpred/main/templates/victron.yaml). That template and its automations remain supported and unchanged. The new [victron_mqtt.yaml](https://raw.githubusercontent.com/springfall2008/batpred/main/templates/victron_mqtt.yaml) uses Predbat's local MQTT component to control a MultiPlus or Quattro directly through Venus OS's dbus-flashmq broker.
+
+This is a constrained integration, not a general Victron configuration manager:
+
+- It uses Victron's external **ESS Mode 2 control method** (the grid-power setpoint) with ESS configured for optimized operation **without phase compensation**. `/Settings/CGwacs/Hub4Mode` is a separate setting: Victron defines `1` as ESS with phase compensation, `2` as ESS without phase compensation, and `3` as disabled/external control. Predbat requires the value `2` and never changes it. This value `2` does **not** mean “ESS Mode 2”; do not select External Control/Mode 3 for this route. See Victron's [ESS Mode 2/3 guide](https://www.victronenergy.com/live/ess:ess_mode_2_and_3) and [Hub4Mode D-Bus mapping](https://github.com/victronenergy/dbus_modbustcp/blob/master/attributes.csv).
+- It requires Dynamic ESS to be **off**. Configure `dess_off_value` as the numeric value you have observed for Off on your GX. Predbat refuses controls if the reported mode differs; it never changes DESS.
+- The signed grid setpoint is written to the **volatile** `com.victronenergy.hub4 /Overrides/Setpoint` path. It does not write the flash-persistent `/Settings/CGwacs/AcPowerSetPoint`. Positive values import from the grid; negative values export to it; JSON `null` clears the override. A numeric zero is an active zero-grid target, not a clear. dbus-flashmq accepts JSON-null writes, and users report that this path returns to null when cleared; this clear behavior has not been verified on physical GX hardware here. Test the exact Venus OS version and observe the resulting N notification before enabling controls. Victron added this path for Venus 3.50; it only works with DESS off ([Victron source change](https://github.com/victronenergy/dbus_modbustcp/commit/e5d3cbb86979463a312908960e03e556fd16ef69.patch), [dbus-flashmq write handling](https://github.com/victronenergy/dbus-flashmq), [community report](https://community.victronenergy.com/t/3-50-24-modification-modbustcp-volatile-register-for-gridsetpoint-what-about-mqtt/4816)).
+- Select `battery_service_type: battery` only for a managed battery service exposing `/Io/AllowToCharge`, `/Io/AllowToDischarge`, and `/Info/MaxChargeCurrent`/`MaxDischargeCurrent`. Select `vebus` only for a VE.Bus BMS exposing fresh `/Bms/BmsExpected` and both `/Bms/AllowToCharge` and `/Bms/AllowToDischarge`; this topology uses the configured current/power caps plus the VE.Bus BMS allow flags. Other or incomplete battery topologies fail closed.
+- The Predbat charge-rate limit is converted from watts to amps using fresh battery voltage, then capped by the configured maximum and the BMS's reported maximum charge current. It writes `/Settings/SystemSetup/MaxChargeCurrent`, the DVCC system charge-current limit.
+- The discharge-rate limit is clamped to the configured inverter watt ceiling and the battery BMS's reported discharge-current limit, then written as `/Settings/CGwacs/MaxDischargePower`. These limits are persistent GX settings. They are only sent when needed and are not cleared by stopping Predbat.
+- The integration requires a fresh D-Bus notification for every control it writes. An MQTT publish completing or being accepted is **not** treated as an acknowledgement. GX writes are never retained.
+- Active grid setpoints are deferred until Execute has applied both rate intents; when no directional operation is queued (including demand, stop, and read-only), Execute clears the override before its rate pass. After an active target notification, all mode inputs and limits are checked together before Predbat sends a watchdog heartbeat. Failure to clear is logged and the external watchdog remains the fallback.
+- **This route is not a no-Home-Assistant standalone prediction integration.** The template still requires accurate `battery_power`, `soc_percent`, `grid_power`, `pv_power`, and `load_power` sensors and historical energy data through the HA interface/recorder. The MQTT component currently provides control interlocks and a small set of diagnostic readings; it does not produce prediction power histories or `load_today`/`import_today`/`export_today` energy counters.
+- Victron's official [`dbus-systemcalc-py` system service](https://github.com/victronenergy/dbus-systemcalc-py) exposes useful instantaneous power paths, but these are topology-dependent and do not provide a universal, aligned cumulative set of house-load, grid-import, and grid-export counters. In particular, grid-meter and AC-load paths can be absent or have different coverage depending on wiring and GX configuration. Do not substitute missing values with zero or derive synthetic cumulative sensors with unverified reset, direction, or meter-boundary semantics. A safe no-HA route needs a separately validated topology and persistent history/energy-counter design; that is not implemented here.
+
+#### Configure the GX and MQTT connection
+
+1. Enable the local MQTT service on the GX (Settings → Services → MQTT). Use a dedicated broker account with the narrowest permissions your broker supports. Prefer TLS on port 8883 and the correct CA certificate; do not disable certificate verification. Plaintext on port 1883 is only appropriate on a trusted, isolated LAN. Do not expose the GX MQTT broker to the Internet.
+2. Record the VRM Portal ID and the device instances for the `hub4`, `vebus`, `settings`, `system`, and battery services from actual `N/<portal-id>/...` topics. dbus-flashmq does not publish retained state; after subscribing, request `R/<portal-id>/keepalive` to populate the current values. Do not assume a VE.Bus instance number or infer one from a different GX.
+3. Configure the GX's AC inputs correctly. For a Quattro, select which input is the grid in the Cerbo configuration and set `grid_input` to `0` for input 1 or `1` for input 2. Predbat requires both the VE.Bus `Ac/ActiveIn/ActiveInput` to match that index and the system `Ac/ActiveIn/Source` to report `1` (grid). Input value `240` means disconnected; generator (`2`), shore (`3`), disconnected, missing, stale, or invalid source telemetry blocks active controls. The input-role check depends on the GX's AC-input configuration being correct; verify it at the device.
+4. Configure ESS for optimized operation without phase compensation (`/Settings/CGwacs/Hub4Mode=2`), then use the external Mode 2 grid-setpoint control described above. This is not the same as selecting External Control (`Hub4Mode=3`). Turn DESS off and record the actual numeric DESS-off value read from `/Settings/DynamicEss/Mode`. Set the explicit service instance values and all watt/amp limits in `victron_gx`; the component does not guess IDs, mode values, battery limits, charge/export setpoints, or the grid input.
+5. Prediction still needs accurate HA `battery_power`, `soc_percent`, `grid_power`, `pv_power`, and `load_power` sensors plus recorder history. The example uses Victron GX HA sensor IDs; replace them if your entity names differ. In particular, check power signs and multi-phase load aggregation. Do not use this template for a no-HA standalone deployment.
+
+#### Independent watchdog is required
+
+The template leaves `enable_controls: false`. **Do not enable it until the separate watchdog is installed, configured, and running on a separate process/host from Predbat.** The watchdog must have its own restart policy, broker credentials, and the same random `watchdog_token` as Predbat; keep the token and broker password in a protected environment file, not in command history. Configure the watchdog's safe charge-current and inverter-power values to match your system's intended normal fallback.
+
+The watchdog listens for signed, non-retained heartbeats sent only after the rate limits and setpoint have all been rechecked together. The signature binds the heartbeat to the GX Portal ID, broker host/port, hub4/settings instances, heartbeat topic, and exact fallback values. A heartbeat from a different GX or fallback configuration is rejected. On process startup it attempts the configured fallback before reporting itself healthy; after 900 seconds without a valid Predbat heartbeat, it repeats that fallback. It writes JSON `null` to clear the volatile setpoint override and restores the explicitly configured fallback DVCC charge-current and maximum inverter-power values. It waits for matching GX notifications and does not rely on MQTT publish completion. Failed fallback writes are logged and retried; a failed fallback marks watchdog heartbeats unhealthy so Predbat refuses new active controls. Reconnecting the watchdog does not restart the heartbeat timeout. For example, on a separate machine with `aiomqtt` installed and both source files available:
+
+```sh
+export VICTRON_MQTT_PASSWORD='read-from-a-protected-secret-store'
+export VICTRON_WATCHDOG_TOKEN='the-same-random-secret-as-victron_gx.watchdog_token'
+python3 apps/predbat/victron_watchdog.py \
+  --host gx.local \
+  --portal-id YOUR_VRM_PORTAL_ID \
+  --hub4-instance 0 \
+  --settings-instance 0 \
+  --heartbeat-topic predbat/predbat/victron/YOUR_VRM_PORTAL_ID/heartbeat \
+  --safe-max-charge-current-a 70 \
+  --safe-max-discharge-power-w 4000 \
+  --timeout-seconds 900
+```
+
+Add it to the external host's service manager and confirm that it reconnects after that host restarts. Add `--username` and, if needed, `--ca-file` to match the GX broker. The broker password is read from `VICTRON_MQTT_PASSWORD`; the shared token is read from `VICTRON_WATCHDOG_TOKEN`. The optional `--insecure` flag disables TLS verification and is not recommended. After verifying the watchdog, set `enable_controls: true` in `victron_gx` and restart Predbat.
+
+The watchdog is an independent fallback process, not a safety certification or guarantee. It cannot reset the GX while the GX, broker, network, watchdog host, or watchdog credentials are unavailable. A failed or delayed GX notification can leave the prior setting active until the watchdog acts. A 900-second timeout is not instantaneous, so choose a shorter interval only if the watchdog host, broker, and GX have been tested to tolerate the resulting traffic and recovery behavior. Do not rely on Predbat, this watchdog, or this integration as the sole protection against battery, electrical, fire, or export-limit hazards. Review the GX, BMS, local electrical, and utility limits with a qualified installer. There is no warranty that any particular MultiPlus/Quattro model, firmware, phase configuration, battery, or AC wiring will behave as expected.
 
 ## I want to add an unsupported inverter to Predbat
 

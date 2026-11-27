@@ -66,7 +66,7 @@
 // ABI 13 (car cancel branch): both of the above, plus cancel_floor_kw, each cancellable slot's car charge rate, after cancel_penalty_rate in PkContext.
 // ABI 12 (main): the charge and discharge curves are rate grid curve rows of PK_CURVE_WIDTH (the battery rate grids).
 // ABI 14: the car cancel branch's ABI 13 merged with main's ABI 12 - the cancel table and the PK_CURVE_WIDTH curve rows.
-#define PK_ABI_VERSION 14
+#define PK_ABI_VERSION 15
 #define PK_CURVE_WIDTH 103 // a rate grid curve row: 101 SoC percents, the rated rate, then the absolute temperature cap
 // Parity 14: the explicit (mode, target, power) fields replace the packed double throughout the hot
 // loop (see the ABI 6 note); the floor a target exports to now reads the target field, matching
@@ -91,7 +91,8 @@
 // Parity 22 (car cancel branch): the car cancel branch's parity 21 merged with main's parity 20.
 // Parity 21 to 23 (main): the battery rate grids - each step's charge and discharge rate from a rate grid curve row.
 // Parity 24: the car cancel branch's parity 22 merged with main's parity 23.
-#define PK_PARITY_REVISION 24
+// Parity 25: forecast-only grid_import_limit cap on grid-powered battery charging.
+#define PK_PARITY_REVISION 25
 #define PK_MAX_CARS 8
 #define PK_CANCEL_MAX_SLOTS 64 // Must equal car_cancel.py CAR_CANCEL_MAX_SLOTS (it sizes PkContext's cancel arrays), so a change to either needs an ABI bump - the cancelled set is a 64-bit mask
 #define PK_RUN_EVERY 5 // const.py RUN_EVERY
@@ -268,6 +269,7 @@ struct PkContext {
     double inverter_limit;    // per-minute rate (multiplied by step in the kernel)
     double export_limit;      // per-minute rate
     double pv_ac_limit;       // per-minute rate
+    double grid_import_limit; // per-minute rate (forecast-only site import cap; 0 = disabled)
     double battery_rate_min;
     double battery_rate_max_charge;
     double battery_rate_max_charge_dc;
@@ -895,6 +897,7 @@ static int32_t pk_run_one(const ContextStore *store, const PkScenario *s, PkResu
     const double inverter_limit = c->inverter_limit * step;
     const double export_limit = c->export_limit * step;
     const double pv_ac_limit = c->pv_ac_limit * step;
+    const double grid_import_limit = c->grid_import_limit * step;
     const double reserve = c->reserve;
     const double soc_max = c->soc_max;
     const int32_t reserve_percent = calc_percent_limit(reserve, soc_max);
@@ -1479,6 +1482,17 @@ static int32_t pk_run_one(const ContextStore *store, const PkScenario *s, PkResu
         if (diff < 0 && std::fabs(diff) > export_limit) {
             const double over_limit = std::fabs(diff) - export_limit;
             pv_ac = std::max(pv_ac - over_limit, 0.0);
+        }
+
+        // Forecast-only site import cap - prediction.py: throttle grid-powered battery charging when
+        // total predicted site import exceeds grid_import_limit without erasing house/car load or DC PV.
+        if (grid_import_limit > 0 && battery_draw < 0) {
+            const double grid_import_step = diff + car_gone_kwh + car_load_energy_bypass;
+            if (grid_import_step > grid_import_limit && (battery_draw + pv_dc) < 0) {
+                const double over_import = grid_import_step - grid_import_limit;
+                battery_draw = std::min(battery_draw + over_import * inverter_loss, -pv_dc);
+                diff = get_diff(battery_draw, pv_dc, pv_ac, load_yesterday, inverter_loss, inverter_loss_recp);
+            }
         }
 
         // Adjust battery soc - prediction.py:1060-1064

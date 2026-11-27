@@ -18,7 +18,7 @@ It uses the solar production forecast from Solcast, Open-Meteo, or Forecast.sola
     - [Axle VPP](energy-rates.md#axle-vpp) export events are supported, with Predbat standing aside for the duration of an event.
 - The solar forecast used is the central scenario from Solcast/Open-Meteo/Forecast.solar (50%) with a configurable weighting towards the more pessimistic (10%) scenario.
 - Predbat automatically programs your inverter with the appropriate charging and discharging controls. Both Hybrid inverters and AC-coupled inverters are supported by Predbat.
-- Automatic planning of export slots is also supported, when enabled Predbat can start a forced discharge of the battery if the export rates are high and you have spare capacity.
+- Automatic planning of export slots is also supported, when enabled Predbat can start a forced discharge of the battery if the export rates are high and you have spare capacity, or to create battery headroom ahead of negative import-price periods when the combined discharge and recharge strictly improves the predicted financial outcome (including at zero or negative export tariffs).
 - Historical load data is used to predict your consumption, optionally car charging load can be filtered out of this data.
 - Predbat can be configured to manage the charging of your EV or to use a Solar Diverter, and take into account these loads on the house during these periods.
 - Multiple inverter support is included but depends on all inverters running in lockstep.

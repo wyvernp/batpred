@@ -1622,6 +1622,32 @@ _SNAPSHOT_FIELDS = (
 )
 
 
+def test_negative_tariff_windows(my_predbat):
+    """Automatic thresholds include mildly negative rates even when all rates are negative."""
+    _setup_two_rate_tariff(my_predbat, event_start=0, event_end=0)
+    rates = {minute: (-10.0 if minute < 30 else -0.1) for minute in range(24 * 60)}
+    my_predbat.rate_import = rates
+    my_predbat.rate_import_saving_minutes = set()
+    my_predbat.rate_import_pre_saving = {}
+    my_predbat.rate_export = {minute: 0.0 for minute in range(24 * 60)}
+    my_predbat.rate_export_saving_minutes = set()
+    my_predbat.rate_export_pre_saving = {}
+    my_predbat.rate_min, my_predbat.rate_max, my_predbat.rate_average, _, _ = my_predbat.rate_minmax(rates)
+    my_predbat.rate_export_min, my_predbat.rate_export_max, my_predbat.rate_export_average, _, _ = my_predbat.rate_minmax(my_predbat.rate_export)
+    failed = False
+    my_predbat.set_rate_thresholds()
+    start, end, _ = my_predbat.find_charge_window(rates, 30, my_predbat.rate_import_cost_threshold, False)
+    if start != 30 or end <= start:
+        print("ERROR: automatic threshold excludes negative rates: {} (window {}, {})".format(my_predbat.rate_import_cost_threshold, start, end))
+        failed = True
+    my_predbat.rate_low_threshold = 1.0
+    my_predbat.set_rate_thresholds()
+    if my_predbat.rate_import_cost_threshold >= -0.1:
+        print("ERROR: manual threshold was widened to include negative rates: {}".format(my_predbat.rate_import_cost_threshold))
+        failed = True
+    return failed
+
+
 def run_set_rate_thresholds_tests(my_predbat):
     """Run the set_rate_thresholds / rate_minmax_excluding_saving tests.
 
@@ -1636,6 +1662,7 @@ def run_set_rate_thresholds_tests(my_predbat):
     snapshot = {field: getattr(my_predbat, field) for field in _SNAPSHOT_FIELDS}
     try:
         failed = False
+        failed |= test_negative_tariff_windows(my_predbat)
         failed |= test_rate_minmax_excluding_saving_maps_boosted_minutes_to_base(my_predbat)
         failed |= test_rate_minmax_excluding_saving_keeps_genuine_free_slots(my_predbat)
         failed |= test_rate_minmax_excluding_saving_falls_back_without_a_base_curve(my_predbat)

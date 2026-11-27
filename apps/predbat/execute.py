@@ -720,6 +720,10 @@ class Execute:
             inverter.start_current_hold_cycle()
 
         if self.inverter_needs_reset:
+            components = getattr(self, "components", None)
+            victron_gx = components.get_component("victron_gx_mqtt") if components else None
+            if victron_gx and hasattr(victron_gx, "clear_override_sync"):
+                victron_gx.clear_override_sync()
             self.reset_inverter()
 
         # Belt and braces: the read-only branch below runs before anything that could confer
@@ -727,6 +731,10 @@ class Execute:
         # PredBat is no longer controlling anything, so it is not ours to claim. set_read_only
         # is a global flag, so this is decided once rather than re-decided per inverter.
         if self.set_read_only:
+            components = getattr(self, "components", None)
+            victron_gx = components.get_component("victron_gx_mqtt") if components else None
+            if victron_gx and hasattr(victron_gx, "clear_override_sync"):
+                victron_gx.clear_override_sync()
             self.clear_control_ledger("read-only mode is enabled, so Predbat is not setting anything")
             solis = self.solis_read_only_component()
             if solis and solis.read_only_reset_error:
@@ -1519,7 +1527,13 @@ class Execute:
         # Single point at which rates reach the hardware. Runs after the loop so a balancer can see
         # the whole fleet before anything is written. Inverters that were skipped by the read-only
         # branch (continue), or skipped while an inverter calibrates, recorded no intent and are not written.
+        components = getattr(self, "components", None)
+        victron_gx = components.get_component("victron_gx_mqtt") if components else None
+        if victron_gx and hasattr(victron_gx, "has_pending_operation") and not victron_gx.has_pending_operation():
+            victron_gx.clear_override_sync()
         self.apply_rate_intent(intent)
+        if victron_gx and hasattr(victron_gx, "finalize_control_cycle_sync"):
+            victron_gx.finalize_control_cycle_sync()
         self.record_control_expectations(status_per_inverter, monitor_slots)
 
         # Count register writes - after the apply pass so the rate writes land in this cycle's count

@@ -60,9 +60,9 @@ pred_bat:
 
   num_inverters: 1
 
-  # There is no Victron inverter type in Predbat. SK (Sunsynk) is used as the base type because its
+  # This Home Assistant helper route uses SK (Sunsynk) as its base type because its
   # capability profile matches a Victron ESS: no charge or discharge window to open, only a target SoC
-  # to write, and charge control in amps.
+  # to write, and charge control in amps. The separate direct MQTT route uses VICTRON_GX_MQTT.
   # Do not leave inverter_type empty: Predbat would then assume a GivEnergy inverter and its limits.
   inverter_type: SK
 

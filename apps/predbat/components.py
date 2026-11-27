@@ -809,6 +809,18 @@ COMPONENT_LIST = {
         # an unaligned loop starts every export up to a minute late, more as run() durations drift it.
         "align_minute": True,
     },
+    "victron_gx_mqtt": {
+        "class": "victron.VictronGX",
+        "name": "Victron GX local MQTT",
+        "inverter": True,
+        "args": {
+            # The block contains a broker password and a shared watchdog token; redact it as a whole
+            # from debug exports rather than risk one nested secret being missed.
+            "config": {"required": True, "secret": True, "config": "victron_gx"},
+        },
+        "phase": 1,
+        "can_restart": True,
+    },
     "solax": {
         "class": "solax.SolaxAPI",
         "name": "SolaX Cloud API",

@@ -34,11 +34,11 @@ from utils import in_car_slot, in_iboost_slot
 
 # Expected ABI/parity revisions of the shared library (see prediction_kernel.cpp)
 # ABI 11: scalar results come back already rounded to 4dp. ABI 13 (car cancel branch) adds the car slot cancel table and cancel_floor_kw to
-# PkContext; ABI 12 (main) the rate grid curve rows; ABI 14 is both.
-KERNEL_ABI_VERSION = 14
+# PkContext; ABI 12 (main) the rate grid curve rows; ABI 14 is both. ABI 15 adds grid_import_limit to PkContext.
+KERNEL_ABI_VERSION = 15
 # Parity 22 (car cancel branch): an export over a cancellable car slot cancels it - car load off, buy-back penalty, dispatch rate reverted -
-# merged with main's parity 20. Parity 23 (main): the battery rate grids. Parity 24: both.
-KERNEL_PARITY_REVISION = 24
+# merged with main's parity 20. Parity 23 (main): the battery rate grids. Parity 24: both. Parity 25: forecast-only grid_import_limit.
+KERNEL_PARITY_REVISION = 25
 
 # Maximum number of cars supported by the kernel (PK_MAX_CARS in prediction_kernel.cpp)
 KERNEL_MAX_CARS = PREDBAT_MAX_CARS
@@ -101,6 +101,7 @@ class PkContext(ctypes.Structure):
         ("inverter_limit", ctypes.c_double),
         ("export_limit", ctypes.c_double),
         ("pv_ac_limit", ctypes.c_double),
+        ("grid_import_limit", ctypes.c_double),
         ("battery_rate_min", ctypes.c_double),
         ("battery_rate_max_charge", ctypes.c_double),
         ("battery_rate_max_charge_dc", ctypes.c_double),
@@ -861,6 +862,7 @@ def create_kernel_context(pred, static_cache=None):
         ctx.inverter_limit = pred.inverter_limit
         ctx.export_limit = pred.export_limit
         ctx.pv_ac_limit = pred.pv_ac_limit
+        ctx.grid_import_limit = getattr(pred, "grid_import_limit", 0.0)
         ctx.battery_rate_min = pred.battery_rate_min
         ctx.battery_rate_max_charge = pred.battery_rate_max_charge
         ctx.battery_rate_max_charge_dc = pred.battery_rate_max_charge_dc

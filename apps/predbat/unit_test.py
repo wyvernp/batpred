@@ -125,6 +125,7 @@ from tests.test_iboost import run_iboost_smart_tests
 from tests.test_alert_feed import test_alert_feed
 from tests.test_solax import run_solax_tests
 from tests.test_sigenergy import run_sigenergy_tests
+from tests.test_victron_gx import run_victron_gx_tests
 from tests.test_single_debug import run_single_debug
 from tests.replay_forward import replay_forward, summarise, chart_replay, soc_rms_error, parse_override, capture_log, write_replay_json
 from tests.test_replay_forward import run_replay_forward_tests
@@ -364,6 +365,7 @@ from tests.test_find_charge_window import test_find_charge_window
 from tests.test_fetch_pv_mid_cycle import test_fetch_pv_mid_cycle
 from tests.test_fetch_no_load_source import test_fetch_no_load_source
 from tests.test_set_rate_thresholds import run_set_rate_thresholds_tests
+from tests.test_negative_import_headroom import run_negative_import_headroom_tests
 from tests.test_random_scenarios import generate_scenarios, save_scenarios, run_scenarios_from_file, compare_results, profile_scenario, run_random_scenario_tests, run_random_scenario_reapply_tests
 from tests import network_guard
 from tests.test_network_guard import test_network_guard
@@ -797,6 +799,7 @@ def main():
         ("fetch_pv_mid_cycle", test_fetch_pv_mid_cycle, "PV forecasts not empty part way through fetch_sensor_data (#4317)", False),
         ("fetch_no_load_source", test_fetch_no_load_source, "No load source raises LoadSourceMissing with the right status (#5092)", False),
         ("set_rate_thresholds", run_set_rate_thresholds_tests, "Rate threshold saving-session exclusion tests (GH#5050)", False),
+        ("negative_import_headroom", run_negative_import_headroom_tests, "Negative import pre-discharge headroom and forecast-only grid_import_limit tests", False),
         ("find_charge_rate", test_find_charge_rate, "Find charge rate tests", False),
         ("find_charge_rate_pv", test_find_charge_rate_pv_overlap, "Find charge rate with PV overlap", False),
         ("find_charge_rate_string_temp", test_find_charge_rate_string_temperature, "Find charge rate string temperature", False),
@@ -872,6 +875,7 @@ def main():
         ("octopus_domain", test_octopus_domain, "Octopus API domain move to api.oegb-kraken.energy (GH#5786)", False),
         ("solax", run_solax_tests, "SolaX API tests", False),
         ("sigenergy", run_sigenergy_tests, "Sigenergy Cloud API tests", False),
+        ("victron_gx_mqtt", run_victron_gx_tests, "Victron GX local MQTT safety and watchdog tests", False),
         ("iboost_smart", run_iboost_smart_tests, "iBoost smart tests", False),
         ("car_charging_smart", run_car_charging_smart_tests, "Car charging smart tests", False),
         ("battery_accuracy", run_battery_accuracy_tests, "Battery prediction accuracy recording tests", False),

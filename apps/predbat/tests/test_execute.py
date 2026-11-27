@@ -2312,6 +2312,171 @@ def test_reserve_hold_via_discharge_rate(my_predbat):
     return failed
 
 
+def test_victron_control_commit_after_execute_rates(my_predbat):
+    """The direct GX setpoint commit happens after Execute applies both rate intents."""
+
+    class FakeVictronComponent:
+        def __init__(self, inverter):
+            self.inverter = inverter
+            self.events = []
+            self.pending = False
+
+        def set_operation_sync(self, target_soc, charging, exporting):
+            self.pending = bool(charging or exporting)
+            self.events.append(("queue" if self.pending else "clear", charging, exporting))
+            self.inverter.soc_target = target_soc
+            self.inverter.current_charge_limit = target_soc
+            self.inverter.isCharging = charging
+            self.inverter.isExporting = exporting
+            return True
+
+        def set_charge_power_sync(self, power_w):
+            self.events.append(("charge", power_w))
+            self.inverter.charge_rate = power_w
+            self.inverter.charge_rate_now = power_w
+            return True
+
+        def set_discharge_power_sync(self, power_w):
+            self.events.append(("discharge", power_w))
+            self.inverter.discharge_rate = power_w
+            self.inverter.discharge_rate_now = power_w
+            return True
+
+        def finalize_control_cycle_sync(self):
+            self.events.append(("finalize",))
+            self.pending = False
+            return True
+
+        def clear_override_sync(self):
+            self.events.append(("clear",))
+            self.pending = False
+            return True
+
+        def has_pending_operation(self):
+            return self.pending
+
+    original_inverters = my_predbat.inverters
+    inverter = ActiveTestInverter(0, 0, 10.0, my_predbat.now_utc)
+    original_type = getattr(inverter, "inverter_type", None)
+    original_charge_method = inverter.adjust_charge_rate
+    original_discharge_method = inverter.adjust_discharge_rate
+    original_target_method = inverter.adjust_battery_target
+    original_components = my_predbat.components
+    original_read_only = my_predbat.set_read_only
+    original_reset = my_predbat.inverter_needs_reset
+    original_reset_force = my_predbat.inverter_needs_reset_force
+    test_inverters = [inverter] + [ActiveTestInverter(index, 0, 10.0, my_predbat.now_utc) for index in range(1, max(1, len(original_inverters)))]
+    for test_inverter in test_inverters[1:]:
+        test_inverter.inverter_type = "GE"
+    my_predbat.inverters = test_inverters
+    inverter.inverter_type = "VICTRON_GX_MQTT"
+    component = FakeVictronComponent(inverter)
+
+    class FakeComponents:
+        def get_component(self, name):
+            return component if name == "victron_gx_mqtt" else None
+
+    my_predbat.components = FakeComponents()
+
+    def adjust_charge_rate(power_w, notify=True):
+        return component.set_charge_power_sync(power_w)
+
+    def adjust_discharge_rate(power_w, notify=True):
+        return component.set_discharge_power_sync(power_w)
+
+    def adjust_battery_target(target_soc, isCharging=False, isExporting=False):
+        return component.set_operation_sync(target_soc, isCharging, isExporting)
+
+    inverter.adjust_charge_rate = adjust_charge_rate
+    inverter.adjust_discharge_rate = adjust_discharge_rate
+    inverter.adjust_battery_target = adjust_battery_target
+    try:
+        my_predbat.inverter_needs_reset = True
+        failed = run_execute_test(
+            my_predbat,
+            "victron_mode_transition_order",
+            charge_window_best=[{"start": my_predbat.minutes_now, "end": my_predbat.minutes_now + 60, "average": 1}],
+            charge_limit_best=[10, 10],
+            set_charge_window=True,
+            set_export_window=True,
+            has_timed_pause=False,
+            assert_charge_time_enable=True,
+            assert_charge_end_time_minutes=my_predbat.minutes_now + 60,
+            assert_status="Charging",
+        )
+        if failed:
+            return True
+        charge_indices = [index for index, event in enumerate(component.events) if event[0] == "charge"]
+        discharge_indices = [index for index, event in enumerate(component.events) if event[0] == "discharge"]
+        active_queue_indices = [index for index, event in enumerate(component.events) if event[0] == "queue"]
+        final_indices = [index for index, event in enumerate(component.events) if event[0] == "finalize"]
+        if not charge_indices or not discharge_indices or not active_queue_indices or not final_indices:
+            print("ERROR: Victron Execute cycle did not apply both rate intents and finalize its mode transition")
+            return True
+        queued_index = max(active_queue_indices)
+        rate_indices_after_queue = [index for index in charge_indices + discharge_indices if index > queued_index]
+        if not rate_indices_after_queue:
+            print("ERROR: Victron Execute did not queue its setpoint before applying rate intents")
+            return True
+        if max(rate_indices_after_queue) > min(final_indices):
+            print("ERROR: Victron mode transition finalized before the executor's rate pass completed")
+            return True
+        if component.events[0][0] != "clear":
+            print("ERROR: Victron hardware reset changed rates before clearing the previous override")
+            return True
+        component.events.clear()
+        for test_inverter in my_predbat.inverters:
+            test_inverter.charge_time_enable = False
+        failed = run_execute_test(
+            my_predbat,
+            "victron_demand_clears_override",
+            set_charge_window=True,
+            set_export_window=True,
+            assert_status="Demand",
+            assert_charge_time_enable=False,
+            assert_charge_end_time_minutes=-1,
+        )
+        if failed or not component.events or component.events[0][0] != "clear":
+            print("ERROR: Victron demand mode did not clear the override before rate intents")
+            return True
+        if any(event[0] == "queue" for event in component.events):
+            print("ERROR: Victron demand mode queued a directional grid setpoint")
+            return True
+        demand_events = [event[0] for event in component.events]
+        if not all(name in demand_events for name in ("charge", "discharge", "finalize")):
+            print("ERROR: Victron demand mode did not apply both rate intents before finalizing its neutral control cycle")
+            return True
+        component.events.clear()
+        for test_inverter in my_predbat.inverters:
+            test_inverter.charge_time_enable = False
+        failed = run_execute_test(
+            my_predbat,
+            "victron_read_only_clears_override",
+            read_only=True,
+            assert_status="Read-Only",
+            assert_charge_time_enable=False,
+            assert_charge_end_time_minutes=-1,
+        )
+        if failed or not component.events or component.events[0][0] != "clear":
+            print("ERROR: Victron read-only handover did not clear the override before leaving control")
+            return True
+        if any(event[0] in ("charge", "discharge", "queue") for event in component.events):
+            print("ERROR: Victron read-only handover issued a rate or active setpoint command")
+            return True
+        return False
+    finally:
+        my_predbat.components = original_components
+        my_predbat.inverters = original_inverters
+        inverter.adjust_charge_rate = original_charge_method
+        inverter.adjust_discharge_rate = original_discharge_method
+        inverter.adjust_battery_target = original_target_method
+        my_predbat.set_read_only = original_read_only
+        my_predbat.inverter_needs_reset = original_reset
+        my_predbat.inverter_needs_reset_force = original_reset_force
+        if original_type is not None:
+            inverter.inverter_type = original_type
+
+
 def run_execute_tests(my_predbat):
     print("**** Running execute tests ****\n")
 
@@ -5725,6 +5890,10 @@ def run_execute_tests(my_predbat):
         return failed
 
     failed |= test_freeze_flags_do_not_leak_between_scenarios(my_predbat)
+    if failed:
+        return failed
+
+    failed |= test_victron_control_commit_after_execute_rates(my_predbat)
     if failed:
         return failed
 

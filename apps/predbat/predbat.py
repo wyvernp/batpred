@@ -488,6 +488,7 @@ class PredBat(hass.Hass, Octopus, Energidataservice, Stromligning, Fetch, Plan, 
         self.inverter_freeze_export_discharge_rate = 0.0
         self.inverter_hybrid = True
         self.pv_ac_limit = 0
+        self.grid_import_limit = 0.0
         self.inverter_soc_reset = False
         self.inverter_set_charge_before = True
         self.best_soc_min = 0
